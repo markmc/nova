@@ -45,7 +45,7 @@ flags.DEFINE_integer('report_interval', 10,
 flags.DEFINE_integer('periodic_interval', 60,
                      'seconds between running periodic tasks',
                      lower_bound=1)
-flags.DEFINE_string('ec2_manager', 'nova.api.manager.EC2Manager',
+flags.DEFINE_string('ec2_manager', None,
                     'EC2 API service manager')
 flags.DEFINE_string('ec2_listen', "0.0.0.0",
                     'IP address for EC2 API to listen')
@@ -55,6 +55,12 @@ flags.DEFINE_string('osapi_manager', None,
 flags.DEFINE_string('osapi_listen', "0.0.0.0",
                     'IP address for OpenStack API to listen')
 flags.DEFINE_integer('osapi_listen_port', 8774, 'port for os api to listen')
+flags.DEFINE_string('metadata_manager', 'nova.api.manager.MetadataManager',
+                    'OpenStack metadata service manager')
+flags.DEFINE_string('metadata_listen', "0.0.0.0",
+                    'IP address for metadata api to listen')
+flags.DEFINE_integer('metadata_listen_port', 8775,
+                     'port for metadata api to listen')
 flags.DEFINE_string('api_paste_config', "api-paste.ini",
                     'File name for the paste.deploy config for nova-api')
 
