@@ -71,6 +71,23 @@ class MetadataRequestHandler(wsgi.Application):
                 network_api=network.API(),
                 volume_api=volume.API())
 
+    def _get_mpi_data(self, context, project_id):
+        result = {}
+        search_opts = {'project_id': project_id, 'deleted': False}
+        for instance in self.compute_api.get_all(context,
+                search_opts=search_opts):
+            ip_info = ec2utils.get_ip_info_for_instance(context, instance)
+            # only look at ipv4 addresses
+            fixed_ips = ip_info['fixed_ips']
+            if fixed_ips:
+                line = '%s slots=%d' % (fixed_ips[0], instance['vcpus'])
+                key = str(instance['key_name'])
+                if key in result:
+                    result[key].append(line)
+                else:
+                    result[key] = [line]
+        return result
+
     def get_metadata(self, address):
         ctxt = context.get_admin_context()
         search_opts = {'fixed_ip': address, 'deleted': False}
@@ -86,7 +103,7 @@ class MetadataRequestHandler(wsgi.Application):
         # are populated.
         instance_ref = db.instance_get(ctxt, instance_ref[0]['id'])
 
-        mpi = self.cc._get_mpi_data(ctxt, instance_ref['project_id'])
+        mpi = self._get_mpi_data(ctxt, instance_ref['project_id'])
         hostname = "%s.%s" % (instance_ref['hostname'], FLAGS.dhcp_domain)
         host = instance_ref['host']
         services = db.service_get_all_by_host(ctxt.elevated(), host)

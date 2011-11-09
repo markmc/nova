@@ -234,23 +234,6 @@ class CloudController(object):
             utils.runthis(_("Generating root CA: %s"), "sh", genrootca_sh_path)
             os.chdir(start)
 
-    def _get_mpi_data(self, context, project_id):
-        result = {}
-        search_opts = {'project_id': project_id, 'deleted': False}
-        for instance in self.compute_api.get_all(context,
-                search_opts=search_opts):
-            ip_info = ec2utils.get_ip_info_for_instance(context, instance)
-            # only look at ipv4 addresses
-            fixed_ips = ip_info['fixed_ips']
-            if fixed_ips:
-                line = '%s slots=%d' % (fixed_ips[0], instance['vcpus'])
-                key = str(instance['key_name'])
-                if key in result:
-                    result[key].append(line)
-                else:
-                    result[key] = [line]
-        return result
-
     def _get_image_state(self, image):
         # NOTE(vish): fallback status if image_state isn't set
         state = image.get('status')
