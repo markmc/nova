@@ -366,7 +366,7 @@ class CloudController(object):
         floating_ip = floating_ips and floating_ips[0] or ''
 
         ec2_id = ec2utils.id_to_ec2_id(instance_ref['id'])
-        image_ec2_id = self.image_ec2_id(instance_ref['image_ref'])
+        image_ec2_id = ec2utils.image_ec2_id(instance_ref['image_ref'])
         security_groups = db.security_group_get_by_instance(ctxt,
                                                             instance_ref['id'])
         security_groups = [x['name'] for x in security_groups]
@@ -399,8 +399,8 @@ class CloudController(object):
 
         for image_type in ['kernel', 'ramdisk']:
             if instance_ref.get('%s_id' % image_type):
-                ec2_id = self.image_ec2_id(instance_ref['%s_id' % image_type],
-                                           self._image_type(image_type))
+                ec2_id = ec2utils.image_ec2_id(instance_ref['%s_id' % image_type],
+                                               self._image_type(image_type))
                 data['meta-data']['%s-id' % image_type] = ec2_id
 
         if False:  # TODO(vish): store ancestor ids
@@ -1094,14 +1094,14 @@ class CloudController(object):
         if kernel_uuid is None or kernel_uuid == '':
             return
         kernel_id = self._get_image_id(context, kernel_uuid)
-        result[key] = self.image_ec2_id(kernel_id, 'aki')
+        result[key] = ec2utils.image_ec2_id(kernel_id, 'aki')
 
     def _format_ramdisk_id(self, context, instance_ref, result, key):
         ramdisk_uuid = instance_ref['ramdisk_id']
         if ramdisk_uuid is None or ramdisk_uuid == '':
             return
         ramdisk_id = self._get_image_id(context, ramdisk_uuid)
-        result[key] = self.image_ec2_id(ramdisk_id, 'ari')
+        result[key] = ec2utils.image_ec2_id(ramdisk_id, 'ari')
 
     def describe_instance_attribute(self, context, instance_id, attribute,
                                     **kwargs):
@@ -1283,7 +1283,7 @@ class CloudController(object):
             i['instanceId'] = ec2_id
             image_uuid = instance['image_ref']
             image_id = self._get_image_id(context, image_uuid)
-            i['imageId'] = self.image_ec2_id(image_id)
+            i['imageId'] = ec2utils.image_ec2_id(image_id)
             self._format_kernel_id(context, instance, i, 'kernelId')
             self._format_ramdisk_id(context, instance, i, 'ramdiskId')
             i['instanceState'] = {
@@ -1508,17 +1508,6 @@ class CloudController(object):
             return 'ami'
         return image_type
 
-    @staticmethod
-    def image_ec2_id(image_id, image_type='ami'):
-        """Returns image ec2_id using id and three letter type."""
-        template = image_type + '-%08x'
-        try:
-            return ec2utils.id_to_ec2_id(image_id, template=template)
-        except ValueError:
-            #TODO(wwolf): once we have ec2_id -> glance_id mapping
-            # in place, this wont be necessary
-            return "ami-00000000"
-
     def _get_image(self, context, ec2_id):
         try:
             internal_id = ec2utils.ec2_id_to_id(ec2_id)
@@ -1546,15 +1535,15 @@ class CloudController(object):
         """Convert from format defined by GlanceImageService to S3 format."""
         i = {}
         image_type = self._image_type(image.get('container_format'))
-        ec2_id = self.image_ec2_id(image.get('id'), image_type)
+        ec2_id = ec2utils.image_ec2_id(image.get('id'), image_type)
         name = image.get('name')
         i['imageId'] = ec2_id
         kernel_id = image['properties'].get('kernel_id')
         if kernel_id:
-            i['kernelId'] = self.image_ec2_id(kernel_id, 'aki')
+            i['kernelId'] = ec2utils.image_ec2_id(kernel_id, 'aki')
         ramdisk_id = image['properties'].get('ramdisk_id')
         if ramdisk_id:
-            i['ramdiskId'] = self.image_ec2_id(ramdisk_id, 'ari')
+            i['ramdiskId'] = ec2utils.image_ec2_id(ramdisk_id, 'ari')
         i['imageOwnerId'] = image['properties'].get('owner_id')
         if name:
             i['imageLocation'] = "%s (%s)" % (image['properties'].
@@ -1613,7 +1602,7 @@ class CloudController(object):
     def _register_image(self, context, metadata):
         image = self.image_service.create(context, metadata)
         image_type = self._image_type(image.get('container_format'))
-        image_id = self.image_ec2_id(image['id'], image_type)
+        image_id = ec2utils.image_ec2_id(image['id'], image_type)
         return image_id
 
     def register_image(self, context, image_location=None, **kwargs):

@@ -29,6 +29,17 @@ def ec2_id_to_id(ec2_id):
         raise exception.InvalidEc2Id(ec2_id=ec2_id)
 
 
+def image_ec2_id(image_id, image_type='ami'):
+    """Returns image ec2_id using id and three letter type."""
+    template = image_type + '-%08x'
+    try:
+        return id_to_ec2_id(image_id, template=template)
+    except ValueError:
+        #TODO(wwolf): once we have ec2_id -> glance_id mapping
+        # in place, this wont be necessary
+        return "ami-00000000"
+
+
 def id_to_ec2_id(instance_id, template='i-%08x'):
     """Convert an instance ID (int) to an ec2 ID (i-[base 16 number])"""
     return template % int(instance_id)
