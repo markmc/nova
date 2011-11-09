@@ -374,7 +374,7 @@ class CloudController(object):
         security_groups = [x['name'] for x in security_groups]
         mappings = self._format_instance_mapping(ctxt, instance_ref)
         data = {
-            'user-data': self._format_user_data(instance_ref),
+            'user-data': base64.b64decode(instance_ref['user_data']),
             'meta-data': {
                 'ami-id': image_ec2_id,
                 'ami-launch-index': instance_ref['launch_index'],
@@ -1105,10 +1105,6 @@ class CloudController(object):
         ramdisk_id = self._get_image_id(context, ramdisk_uuid)
         result[key] = self.image_ec2_id(ramdisk_id, 'ari')
 
-    @staticmethod
-    def _format_user_data(instance_ref):
-        return base64.b64decode(instance_ref['user_data'])
-
     def describe_instance_attribute(self, context, instance_id, attribute,
                                     **kwargs):
         def _unsupported_attribute(instance, result):
@@ -1154,7 +1150,7 @@ class CloudController(object):
             _unsupported_attribute(instance, result)
 
         def _format_attr_user_data(instance, result):
-            result['userData'] = self._format_user_data(instance)
+            result['userData'] = base64.b64decode(instance['user_data'])
 
         attribute_formatter = {
             'blockDeviceMapping': _format_attr_block_device_mapping,
