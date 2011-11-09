@@ -55,7 +55,7 @@ FLAGS = flags.FLAGS
 flags.DECLARE('dhcp_domain', 'nova.network.manager')
 flags.DECLARE('service_down_time', 'nova.scheduler.driver')
 
-LOG = logging.getLogger("nova.api.cloud")
+LOG = logging.getLogger("nova.api.ec2.cloud")
 
 
 def _gen_key(context, user_id, key_name):
