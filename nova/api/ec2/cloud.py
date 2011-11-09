@@ -105,11 +105,9 @@ def state_description_from_vm_state(vm_state):
     return _STATE_DESCRIPTION_MAP.get(vm_state, vm_state)
 
 
-# TODO(yamahata): hypervisor dependent default device name
-_DEFAULT_ROOT_DEVICE_NAME = '/dev/sda1'
 _DEFAULT_MAPPINGS = {'ami': 'sda1',
                      'ephemeral0': 'sda2',
-                     'root': _DEFAULT_ROOT_DEVICE_NAME,
+                     'root': block_device.DEFAULT_ROOT_DEV_NAME,
                      'swap': 'sda3'}
 
 
@@ -1232,7 +1230,7 @@ class CloudController(object):
     @staticmethod
     def _format_instance_root_device_name(instance, result):
         result['rootDeviceName'] = (instance.get('root_device_name') or
-                                    _DEFAULT_ROOT_DEVICE_NAME)
+                                    block_device.DEFAULT_ROOT_DEV_NAME)
 
     @staticmethod
     def _format_instance_type(instance, result):
@@ -1582,7 +1580,8 @@ class CloudController(object):
                 ('snapshot_id' in bdm or 'volume_id' in bdm) and
                 not bdm.get('no_device')):
                 root_device_type = 'ebs'
-        i['rootDeviceName'] = (root_device_name or _DEFAULT_ROOT_DEVICE_NAME)
+        i['rootDeviceName'] = (root_device_name or
+                               block_device.DEFAULT_ROOT_DEV_NAME)
         i['rootDeviceType'] = root_device_type
 
         _format_mappings(properties, i)
@@ -1650,7 +1649,7 @@ class CloudController(object):
             result['rootDeviceName'] = \
                 block_device.properties_root_device_name(image['properties'])
             if result['rootDeviceName'] is None:
-                result['rootDeviceName'] = _DEFAULT_ROOT_DEVICE_NAME
+                result['rootDeviceName'] = block_device.DEFAULT_ROOT_DEV_NAME
 
         supported_attributes = {
             'blockDeviceMapping': _block_device_mapping_attribute,
