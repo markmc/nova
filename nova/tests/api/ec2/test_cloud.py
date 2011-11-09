@@ -24,7 +24,6 @@ import os
 from eventlet import greenthread
 from M2Crypto import BIO
 from M2Crypto import RSA
-import mox
 
 from nova.api.ec2 import cloud
 from nova.api.ec2 import ec2utils
@@ -37,7 +36,6 @@ from nova import flags
 from nova.image import fake
 from nova import log as logging
 from nova import manager
-from nova import network
 from nova import rpc
 from nova import test
 from nova import utils
