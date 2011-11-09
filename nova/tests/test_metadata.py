@@ -89,9 +89,6 @@ class MetadataTestCase(test.TestCase):
         self.stubs.Set(api, 'instance_get_floating_address', floating_get)
         self.app = handler.MetadataRequestHandler()
         network_manager = fake_network.FakeNetworkManager()
-        self.stubs.Set(self.app.cc.network_api,
-                       'get_instance_uuids_by_ip_filter',
-                       network_manager.get_instance_uuids_by_ip_filter)
         self.stubs.Set(self.app.compute_api.network_api,
                        'get_instance_uuids_by_ip_filter',
                        network_manager.get_instance_uuids_by_ip_filter)

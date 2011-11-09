@@ -33,7 +33,6 @@ from nova import log as logging
 from nova import network
 from nova import volume
 from nova import wsgi
-from nova.api.ec2 import cloud
 from nova.api.ec2 import ec2utils
 
 
@@ -72,7 +71,6 @@ class MetadataRequestHandler(wsgi.Application):
     """Serve metadata."""
 
     def __init__(self):
-        self.cc = cloud.CloudController()
         self.compute_api = compute.API(
                 network_api=network.API(),
                 volume_api=volume.API())
