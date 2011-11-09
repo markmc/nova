@@ -38,7 +38,6 @@ from nova import crypto
 from nova import db
 from nova import exception
 from nova import flags
-from nova import ipv6
 from nova import log as logging
 from nova import network
 from nova import rpc
@@ -235,41 +234,12 @@ class CloudController(object):
             utils.runthis(_("Generating root CA: %s"), "sh", genrootca_sh_path)
             os.chdir(start)
 
-    def _get_ip_info_for_instance(self, context, instance):
-        """Return a list of all fixed IPs for an instance"""
-
-        ip_info = dict(fixed_ips=[], fixed_ip6s=[], floating_ips=[])
-
-        fixed_ips = instance['fixed_ips']
-        for fixed_ip in fixed_ips:
-            fixed_addr = fixed_ip['address']
-            network = fixed_ip.get('network')
-            vif = fixed_ip.get('virtual_interface')
-            if not network or not vif:
-                name = instance['name']
-                ip = fixed_ip['address']
-                LOG.warn(_("Instance %(name)s has stale IP "
-                        "address: %(ip)s (no network or vif)") % locals())
-                continue
-            cidr_v6 = network.get('cidr_v6')
-            if FLAGS.use_ipv6 and cidr_v6:
-                ipv6_addr = ipv6.to_global(cidr_v6, vif['address'],
-                        network['project_id'])
-                if ipv6_addr not in ip_info['fixed_ip6s']:
-                    ip_info['fixed_ip6s'].append(ipv6_addr)
-
-            for floating_ip in fixed_ip.get('floating_ips', []):
-                float_addr = floating_ip['address']
-                ip_info['floating_ips'].append(float_addr)
-            ip_info['fixed_ips'].append(fixed_addr)
-        return ip_info
-
     def _get_mpi_data(self, context, project_id):
         result = {}
         search_opts = {'project_id': project_id, 'deleted': False}
         for instance in self.compute_api.get_all(context,
                 search_opts=search_opts):
-            ip_info = self._get_ip_info_for_instance(context, instance)
+            ip_info = ec2utils.get_ip_info_for_instance(context, instance)
             # only look at ipv4 addresses
             fixed_ips = ip_info['fixed_ips']
             if fixed_ips:
@@ -1217,7 +1187,7 @@ class CloudController(object):
 
             fixed_ip = None
             floating_ip = None
-            ip_info = self._get_ip_info_for_instance(context, instance)
+            ip_info = ec2utils.get_ip_info_for_instance(context, instance)
             if ip_info['fixed_ips']:
                 fixed_ip = ip_info['fixed_ips'][0]
             if ip_info['floating_ips']:

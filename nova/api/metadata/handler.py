@@ -93,7 +93,7 @@ class MetadataRequestHandler(wsgi.Application):
         availability_zone = ec2utils.get_availability_zone_by_host(services,
                                                                    host)
 
-        ip_info = self.cc._get_ip_info_for_instance(ctxt, instance_ref)
+        ip_info = ec2utils.get_ip_info_for_instance(ctxt, instance_ref)
         floating_ips = ip_info['floating_ips']
         floating_ip = floating_ips and floating_ips[0] or ''
 
