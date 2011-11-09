@@ -40,6 +40,11 @@ def image_ec2_id(image_id, image_type='ami'):
         return "ami-00000000"
 
 
+def get_availability_zone_by_host(services, host):
+    if len(services) > 0:
+        return services[0]['availability_zone']
+    return 'unknown zone'
+
 def id_to_ec2_id(instance_id, template='i-%08x'):
     """Convert an instance ID (int) to an ec2 ID (i-[base 16 number])"""
     return template % int(instance_id)

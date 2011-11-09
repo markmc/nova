@@ -282,12 +282,6 @@ class CloudController(object):
                     result[key] = [line]
         return result
 
-    def _get_availability_zone_by_host(self, context, host):
-        services = db.service_get_all_by_host(context.elevated(), host)
-        if len(services) > 0:
-            return services[0]['availability_zone']
-        return 'unknown zone'
-
     def _get_image_state(self, image):
         # NOTE(vish): fallback status if image_state isn't set
         state = image.get('status')
@@ -359,7 +353,9 @@ class CloudController(object):
         mpi = self._get_mpi_data(ctxt, instance_ref['project_id'])
         hostname = "%s.%s" % (instance_ref['hostname'], FLAGS.dhcp_domain)
         host = instance_ref['host']
-        availability_zone = self._get_availability_zone_by_host(ctxt, host)
+        services = db.service_get_all_by_host(ctxt.elevated(), host)
+        availability_zone = ec2utils.get_availability_zone_by_host(services,
+                                                                   host)
 
         ip_info = self._get_ip_info_for_instance(ctxt, instance_ref)
         floating_ips = ip_info['floating_ips']
@@ -1321,7 +1317,8 @@ class CloudController(object):
             self._format_instance_bdm(context, instance_id,
                                       i['rootDeviceName'], i)
             host = instance['host']
-            zone = self._get_availability_zone_by_host(context, host)
+            services = db.service_get_all_by_host(context.elevated(), host)
+            zone = ec2utils.get_availability_zone_by_host(services, host)
             i['placement'] = {'availabilityZone': zone}
             if instance['reservation_id'] not in reservations:
                 r = {}
