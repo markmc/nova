@@ -91,6 +91,9 @@ class MetadataTestCase(test.TestCase):
         self.stubs.Set(self.app.cc.network_api,
                        'get_instance_uuids_by_ip_filter',
                        network_manager.get_instance_uuids_by_ip_filter)
+        self.stubs.Set(self.app.compute_api.network_api,
+                       'get_instance_uuids_by_ip_filter',
+                       network_manager.get_instance_uuids_by_ip_filter)
 
     def request(self, relative_url):
         request = webob.Request.blank(relative_url)

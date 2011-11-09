@@ -33,7 +33,6 @@ import urllib
 
 from nova import block_device
 from nova import compute
-from nova import context
 
 from nova import crypto
 from nova import db
@@ -334,76 +333,6 @@ class CloudController(object):
                 nebs += 1
 
         return mappings
-
-    def get_metadata(self, address):
-        ctxt = context.get_admin_context()
-        search_opts = {'fixed_ip': address, 'deleted': False}
-        try:
-            instance_ref = self.compute_api.get_all(ctxt,
-                    search_opts=search_opts)
-        except exception.NotFound:
-            instance_ref = None
-        if not instance_ref:
-            return None
-
-        # This ensures that all attributes of the instance
-        # are populated.
-        instance_ref = db.instance_get(ctxt, instance_ref[0]['id'])
-
-        mpi = self._get_mpi_data(ctxt, instance_ref['project_id'])
-        hostname = "%s.%s" % (instance_ref['hostname'], FLAGS.dhcp_domain)
-        host = instance_ref['host']
-        services = db.service_get_all_by_host(ctxt.elevated(), host)
-        availability_zone = ec2utils.get_availability_zone_by_host(services,
-                                                                   host)
-
-        ip_info = self._get_ip_info_for_instance(ctxt, instance_ref)
-        floating_ips = ip_info['floating_ips']
-        floating_ip = floating_ips and floating_ips[0] or ''
-
-        ec2_id = ec2utils.id_to_ec2_id(instance_ref['id'])
-        image_ec2_id = ec2utils.image_ec2_id(instance_ref['image_ref'])
-        security_groups = db.security_group_get_by_instance(ctxt,
-                                                            instance_ref['id'])
-        security_groups = [x['name'] for x in security_groups]
-        mappings = self._format_instance_mapping(ctxt, instance_ref)
-        data = {
-            'user-data': base64.b64decode(instance_ref['user_data']),
-            'meta-data': {
-                'ami-id': image_ec2_id,
-                'ami-launch-index': instance_ref['launch_index'],
-                'ami-manifest-path': 'FIXME',
-                'block-device-mapping': mappings,
-                'hostname': hostname,
-                'instance-action': 'none',
-                'instance-id': ec2_id,
-                'instance-type': instance_ref['instance_type']['name'],
-                'local-hostname': hostname,
-                'local-ipv4': address,
-                'placement': {'availability-zone': availability_zone},
-                'public-hostname': hostname,
-                'public-ipv4': floating_ip,
-                'reservation-id': instance_ref['reservation_id'],
-                'security-groups': security_groups,
-                'mpi': mpi}}
-
-        # public-keys should be in meta-data only if user specified one
-        if instance_ref['key_name']:
-            data['meta-data']['public-keys'] = {
-                '0': {'_name': instance_ref['key_name'],
-                      'openssh-key': instance_ref['key_data']}}
-
-        for image_type in ['kernel', 'ramdisk']:
-            if instance_ref.get('%s_id' % image_type):
-                ec2_id = ec2utils.image_ec2_id(instance_ref['%s_id' % image_type],
-                                               self._image_type(image_type))
-                data['meta-data']['%s-id' % image_type] = ec2_id
-
-        if False:  # TODO(vish): store ancestor ids
-            data['ancestor-ami-ids'] = []
-        if False:  # TODO(vish): store product codes
-            data['product-codes'] = []
-        return data
 
     def describe_availability_zones(self, context, **kwargs):
         if ('zone_name' in kwargs and
