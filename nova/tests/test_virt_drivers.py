@@ -445,9 +445,9 @@ class LibvirtConnTestCase(_VirtDriverTestCase):
         # Point _VirtDriverTestCase at the right module
         self.driver_module = nova.virt.libvirt.connection
         super(LibvirtConnTestCase, self).setUp()
-        FLAGS.rescue_image_id = "2"
-        FLAGS.rescue_kernel_id = "3"
-        FLAGS.rescue_ramdisk_id = None
+        self.flags(rescue_image_id="2")
+        self.flags(rescue_kernel_id="3")
+        self.flags(rescue_ramdisk_id=None)
 
     def tearDown(self):
         super(LibvirtConnTestCase, self).setUp()

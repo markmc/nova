@@ -57,7 +57,7 @@ buckets_path_opt = \
                help='path to s3 buckets')
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(buckets_path_opt)
+FLAGS.register_opt(buckets_path_opt)
 
 
 def get_wsgi_server():

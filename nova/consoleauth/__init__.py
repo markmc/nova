@@ -28,4 +28,4 @@ consoleauth_topic_opt = \
                help='the topic console auth proxy nodes listen on')
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(consoleauth_topic_opt)
+FLAGS.register_opt(consoleauth_topic_opt)

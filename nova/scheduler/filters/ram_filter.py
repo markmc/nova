@@ -27,7 +27,7 @@ ram_allocation_ratio_opt = \
                help="virtual ram to physical ram allocation ratio")
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(ram_allocation_ratio_opt)
+FLAGS.register_opt(ram_allocation_ratio_opt)
 
 
 class RamFilter(abstract_filter.AbstractHostFilter):

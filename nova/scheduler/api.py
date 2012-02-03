@@ -39,7 +39,7 @@ enable_zone_routing_opt = \
                 help='When True, routing to child zones will occur.')
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(enable_zone_routing_opt)
+FLAGS.register_opt(enable_zone_routing_opt)
 
 LOG = logging.getLogger('nova.scheduler.api')
 

@@ -70,7 +70,7 @@ xenapi_vmops_opts = [
     ]
 
 FLAGS = flags.FLAGS
-FLAGS.add_options(xenapi_vmops_opts)
+FLAGS.register_opts(xenapi_vmops_opts)
 
 flags.DECLARE('vncserver_proxyclient_address', 'nova.vnc')
 

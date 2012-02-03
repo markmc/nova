@@ -42,7 +42,7 @@ scheduler_driver_opt = \
                help='Default driver to use for the scheduler')
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(scheduler_driver_opt)
+FLAGS.register_opt(scheduler_driver_opt)
 
 
 class SchedulerManager(manager.Manager):

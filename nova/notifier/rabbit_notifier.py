@@ -27,7 +27,7 @@ notification_topic_opt = \
                help='RabbitMQ topic used for Nova notifications')
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(notification_topic_opt)
+FLAGS.register_opt(notification_topic_opt)
 
 
 def notify(message):

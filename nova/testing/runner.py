@@ -73,6 +73,7 @@ reldir = os.path.join(os.path.dirname(__file__), '..', '..')
 absdir = os.path.abspath(reldir)
 sys.path.insert(0, absdir)
 
+from nova import flags
 from nova import log as logging
 
 
@@ -341,6 +342,7 @@ class NovaTestRunner(core.TextTestRunner):
 
 
 def run():
+    flags.FLAGS(sys.argv)
     logging.setup()
     # If any argument looks like a test name but doesn't have "nova.tests" in
     # front of it, automatically add that so we don't have to type as much

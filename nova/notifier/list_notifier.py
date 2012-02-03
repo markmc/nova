@@ -26,7 +26,7 @@ list_notifier_drivers_opt = \
                     help='List of drivers to send notifications')
 
 FLAGS = flags.FLAGS
-FLAGS.add_option(list_notifier_drivers_opt)
+FLAGS.register_opt(list_notifier_drivers_opt)
 
 LOG = logging.getLogger('nova.notifier.list_notifier')
 
