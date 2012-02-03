@@ -34,6 +34,7 @@ from nova import exception
 from nova import flags
 from nova.image import fake
 from nova import log as logging
+from nova.openstack.common import cfg
 from nova import rpc
 from nova import test
 from nova import utils
