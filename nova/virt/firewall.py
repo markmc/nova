@@ -324,18 +324,23 @@ class IptablesFirewallDriver(FirewallDriver):
                         #                 and should be the only one making
                         #                 making rpc calls.
                         import nova.network
+                        from nova.network import model as network_model
+
                         nw_api = nova.network.API()
                         for instance in rule['grantee_group']['instances']:
                             LOG.info('instance: %r', instance)
-                            ips = []
                             nw_info = nw_api.get_instance_nw_info(ctxt,
                                                                   instance)
-                            for net in nw_info:
-                                ips.extend(net[1]['ips'])
+                            nw_info = network_model.NetworkInfo.hydrate(
+                                                                   nw_info)
+
+                            ips = [ip['address']
+                                for ip in nw_info.fixed_ips()
+                                    if ip['version'] == version]
 
                             LOG.info('ips: %r', ips)
                             for ip in ips:
-                                subrule = args + ['-s %s' % ip['ip']]
+                                subrule = args + ['-s %s' % ip]
                                 fw_rules += [' '.join(subrule)]
 
                 LOG.info('Using fw_rules: %r', fw_rules)
