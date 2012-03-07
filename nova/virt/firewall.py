@@ -331,8 +331,6 @@ class IptablesFirewallDriver(FirewallDriver):
                             LOG.info('instance: %r', instance)
                             nw_info = nw_api.get_instance_nw_info(ctxt,
                                                                   instance)
-                            nw_info = network_model.NetworkInfo.hydrate(
-                                                                   nw_info)
 
                             ips = [ip['address']
                                 for ip in nw_info.fixed_ips()
