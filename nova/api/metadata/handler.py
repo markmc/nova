@@ -126,6 +126,54 @@ class MetadataRequestHandler(wsgi.Application):
         if not address:
             raise exception.FixedIpNotFoundForAddress(address=address)
 
+        return {
+            'user-data': base64.b64decode("USER DATA"),
+            'meta-data': {
+                'ami-id': 'ami-6966372c',
+                'ami-launch-index': 0,
+                'ami-manifest-path': 'akm2000-us-west-1/dev-20100406-01.manifest.xml',
+                'block-device-mapping': _DEFAULT_MAPPINGS,
+                'instance-action': 'none',
+                'instance-id': 'i-3de0f678',
+                'instance-type': 'm1.small',
+                'local-hostname': 'ip-10-160-115-246.us-west-1.compute.internal',
+                'local-ipv4': '10.160.115.246',
+                'placement': {'availability-zone': 'us-west-1b'},
+                'public-hostname': 'ec2-204-236-178-101.us-west-1.compute.amazonaws.com',
+                'public-ipv4': '204.236.178.101',
+                'reservation-id': 'r-b76769f2',
+                'security-groups': ['ruby-dev', 'default'],
+                'public-keys': {
+                    '0': {
+                        '_name': 'west-dev01',
+                        'openssh-key': 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC3on58pV0jEdOukPJMi3zaI90Vg5n+vTaWVNBC2pDfaFX5yVIwcT/LQn9CqvcFsayvRaLfrVT8+wz7BnvQwldUAoIC5wCb5MXhhdr+3dk3ey/t8t3rS0lO6pxYc1jchkH23C/RQz+gOzFDuuzxX4zngRRkajYt1hKEVOPLVv9tqBawalCF0d3iALu/XBguj6fUogaqHgNgZZpZXTXDyfmLtWnXErB0/hqmuV6iIXjclB+K94lZCcJaOQSm/+9C6R0jCKwJNteJInvD553IzyTzBgc5Os3ukNuYv+Ub6aP717ikmI5fa5P0pBL+684kkPKvpGoADJveACoL1+uKpk0j west-dev01'
+                        }
+                    },
+                'kernel-id': 'aki-773c6d32',
+                'ramdisk-id': 'ari-c12e7f84',
+                }
+            }
+
+        # public-keys should be in meta-data only if user specified one
+        if instance_ref['key_name']:
+            data['meta-data']['public-keys'] = {
+                '0': {'_name': instance_ref['key_name'],
+                      'openssh-key': instance_ref['key_data']}}
+
+        for image_type in ['kernel', 'ramdisk']:
+            if instance_ref.get('%s_id' % image_type):
+                ec2_id = ec2utils.image_ec2_id(
+                        instance_ref['%s_id' % image_type],
+                        ec2utils.image_type(image_type))
+                data['meta-data']['%s-id' % image_type] = ec2_id
+
+        if False:  # TODO(vish): store ancestor ids
+            data['ancestor-ami-ids'] = []
+        if False:  # TODO(vish): store product codes
+            data['product-codes'] = []
+
+        return data
+
         ctxt = context.get_admin_context()
         try:
             fixed_ip = self.network_api.get_fixed_ip_by_address(ctxt, address)
