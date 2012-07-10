@@ -85,7 +85,7 @@ class ViewBuilder(object):
         return links
 
     def generate_href(self, path=None):
-        """Create an url that refers to a specific version_number."""
+        """Create a URL that refers to a specific version_number."""
         version_number = 'v2'
         if path:
             path = path.strip('/')

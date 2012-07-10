@@ -160,7 +160,7 @@ def inject_file(self, arg_dict):
 
 
 def agent_update(self, arg_dict):
-    """Expects an URL and md5sum of the contents, then directs the agent to
+    """Expects a URL and md5sum of the contents, then directs the agent to
     update itself."""
     request_id = arg_dict["id"]
     url = arg_dict["url"]

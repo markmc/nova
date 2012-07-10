@@ -209,7 +209,7 @@ class BareMetalNodes(object):
         Deactivates the given node by turnning it off.
 
         /tftpboot/fs_x directory is a NFS of node#x
-        and /tftpboot/root_x file is an file system image of node#x.
+        and /tftpboot/root_x file is a file system image of node#x.
         """
         node_ip = self.get_ip_by_id(node_id)
         LOG.debug(_("deactivate_node is called for "
@@ -355,7 +355,7 @@ class BareMetalNodes(object):
 
         This should be done after ssh key is injected.
         /tftpboot/fs_x directory is a NFS of node#x.
-        /tftpboot/root_x file is an file system image of node#x.
+        /tftpboot/root_x file is a file system image of node#x.
         """
         path1 = bpath + "/root"
         pathx = "/tftpboot/root_" + str(node_id)

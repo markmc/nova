@@ -27,7 +27,7 @@ def get_view_builder(req):
 
 class ViewBuilder(compute_views.ViewBuilder):
     def generate_href(self, path=None):
-        """Create an url that refers to a specific version_number."""
+        """Create a URL that refers to a specific version_number."""
         version_number = 'v1'
         if path:
             path = path.strip('/')
