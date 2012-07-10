@@ -20,7 +20,7 @@ msgstr ""
 #: nova/context.py:59
 #, python-format
 msgid "Arguments dropped when creating context: %s"
-msgstr ""
+msgstr "Argumentos caiu durante a criação de contexto: %s"
 
 #: nova/context.py:90
 #, python-format
@@ -37,7 +37,7 @@ msgstr "Nome do arquivo da chave privada"
 
 #: nova/crypto.py:54
 msgid "Filename of root Certificate Revocation List"
-msgstr ""
+msgstr "Nome de raiz Lista de certificados revogados"
 
 #: nova/crypto.py:57
 msgid "Where we keep our keys"
@@ -91,7 +91,7 @@ msgstr ""
 
 #: nova/exception.py:131
 msgid "An unknown exception occurred."
-msgstr ""
+msgstr "Uma exceção ocorreu desconhecido."
 
 #: nova/exception.py:149 nova/rpc/common.py:46
 msgid "Exception in string format operation"
@@ -99,7 +99,7 @@ msgstr ""
 
 #: nova/exception.py:159
 msgid "Unknown"
-msgstr ""
+msgstr "Desconhecido"
 
 #: nova/exception.py:179
 msgid "Failed to decrypt text"
@@ -460,6 +460,8 @@ msgid ""
 "Some images have been stored via hrefs. This version of the api does not "
 "support displaying image hrefs."
 msgstr ""
+"Algumas imagens foram armazenadas por meio de HREFs. Esta versão da API "
+"não suporte a exibição de HREFs imagem."
 
 #: nova/exception.py:502
 #, python-format
@@ -1040,12 +1042,12 @@ msgstr ""
 
 #: nova/exception.py:989
 msgid "Quota exceeded"
-msgstr ""
+msgstr "Cota Excedida"
 
 #: nova/exception.py:993
 #, python-format
 msgid "Quota exceeded: already used %(used)d of %(allowed)d instances"
-msgstr ""
+msgstr "Cota excedida: já usou %(used)d de %(allowed)d instâncias"
 
 #: nova/exception.py:998
 msgid "Maximum volume size exceeded"
@@ -3673,11 +3675,11 @@ msgstr ""
 
 #: nova/db/sqlalchemy/migrate_repo/versions/095_change_fk_instance_id_to_uuid.py:57
 msgid "foreign key could not be dropped"
-msgstr ""
+msgstr "chave estrangeira não pode ser descartado"
 
 #: nova/db/sqlalchemy/migrate_repo/versions/095_change_fk_instance_id_to_uuid.py:91
 msgid "foreign key could not be created"
-msgstr ""
+msgstr "chave estrangeira não pode ser criado"
 
 #: nova/db/sqlalchemy/migrate_repo/versions/097_quota_usages_reservations.py:98
 msgid "quota_usages table not dropped"
@@ -3698,7 +3700,7 @@ msgstr ""
 #: nova/image/glance.py:279
 #, python-format
 msgid "Creating image in Glance. Metadata passed in %s"
-msgstr ""
+msgstr "Criando imagen no Glance.  Metadados aprovada em %s"
 
 #: nova/image/glance.py:282
 #, python-format
@@ -6891,7 +6893,7 @@ msgstr ""
 #: nova/virt/xenapi/volumeops.py:66
 #, python-format
 msgid "Creating SR %s"
-msgstr ""
+msgstr "Criando SR %s"
 
 #: nova/virt/xenapi/volumeops.py:70
 msgid "Could not create SR"
