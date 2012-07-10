@@ -117,7 +117,7 @@ msgid "Virtual Interface creation failed"
 msgstr "Ошибка создания виртуального интерфейса"
 
 #: nova/exception.py:191
-msgid "5 attempts to create virtual interfacewith unique mac address failed"
+msgid "5 attempts to create virtual interface with unique mac address failed"
 msgstr ""
 "5 безуспешных попыток создания виртуального интерфейса с уникальным "
 "mac-адресом"

@@ -192,7 +192,7 @@ class VirtualInterfaceCreateException(NovaException):
 
 
 class VirtualInterfaceMacAddressException(NovaException):
-    message = _("5 attempts to create virtual interface"
+    message = _("5 attempts to create virtual interface "
                 "with unique mac address failed")
 
 

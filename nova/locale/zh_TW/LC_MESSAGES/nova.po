@@ -114,7 +114,7 @@ msgid "Virtual Interface creation failed"
 msgstr "建立虛擬介面失敗"
 
 #: nova/exception.py:191
-msgid "5 attempts to create virtual interfacewith unique mac address failed"
+msgid "5 attempts to create virtual interface with unique mac address failed"
 msgstr "連續嘗試 5 次建立唯一網路位置(MAC)的虛擬介面失敗"
 
 #: nova/exception.py:196
