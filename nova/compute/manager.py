@@ -188,7 +188,6 @@ def checks_instance_lock(function):
         else:
             LOG.error(_("check_instance_lock: not executing |%s|"),
                       function, context=context, instance_uuid=instance_uuid)
-            return False
 
     @functools.wraps(function)
     def decorated_function(self, context, instance_uuid, *args, **kwargs):
@@ -1885,7 +1884,6 @@ class ComputeManager(manager.SchedulerDependentManager):
 
         self.driver.inject_network_info(instance,
                                         self._legacy_nw_info(network_info))
-        return network_info
 
     @exception.wrap_exception(notifier=notifier, publisher_id=publisher_id())
     @wrap_instance_fault
@@ -2013,7 +2011,6 @@ class ComputeManager(manager.SchedulerDependentManager):
             'volume_size': None,
             'no_device': None}
         self.db.block_device_mapping_create(context, values)
-        return True
 
     def _detach_volume(self, context, instance, bdm):
         """Do the actual driver detach using block device mapping."""
@@ -2046,7 +2043,6 @@ class ComputeManager(manager.SchedulerDependentManager):
         self.volume_api.detach(context.elevated(), volume)
         self.db.block_device_mapping_destroy_by_instance_and_volume(
             context, instance_uuid, volume_id)
-        return True
 
     @exception.wrap_exception(notifier=notifier, publisher_id=publisher_id())
     def remove_volume_connection(self, context, instance_id, volume_id):
