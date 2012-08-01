@@ -131,13 +131,32 @@ class API(base.Base):
             }
 
         volume = self.db.volume_create(context, options)
-        rpc.cast(context,
-                 FLAGS.scheduler_topic,
-                 {"method": "create_volume",
-                  "args": {"topic": FLAGS.volume_topic,
-                           "volume_id": volume['id'],
-                           "snapshot_id": snapshot_id,
-                           "reservations": reservations}})
+        # It is a simple solution for bug 1008866
+        # If snapshot_id is set, make the call create volume directly to
+        # the volume host where the snapshot resides instead of passing it
+        # through the scheduer. So snapshot can be copy to new volume.
+        if snapshot_id:
+            snapshot_ref = self.db.snapshot_get(context, snapshot_id)
+            snapshot_src_volume_id = snapshot_ref.get('volume_id')
+            snapshot_src_volume_ref = self.db.volume_get(context,
+                                        snapshot_src_volume_id)
+            volume_host = snapshot_src_volume_ref.get('host')
+            topic = rpc.queue_get_for(context,
+                                      FLAGS.volume_topic,
+                                      volume_host)
+            rpc.cast(context,
+                     topic,
+                     {"method": "create_volume",
+                      "args": {"volume_id": volume['id'],
+                               "snapshot_id": snapshot_id}})
+        else:
+            rpc.cast(context,
+                     FLAGS.scheduler_topic,
+                     {"method": "create_volume",
+                      "args": {"topic": FLAGS.volume_topic,
+                               "volume_id": volume['id'],
+                               "snapshot_id": snapshot_id,
+                               "reservations": reservations}})
         return volume
 
     @wrap_check_policy
