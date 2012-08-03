@@ -200,10 +200,10 @@ class CellsManagerClassTestCase(test.TestCase):
                 'need_response': True}
 
         z2_mgr = fakes.FAKE_CELL_MANAGERS['cell2']
-        orig_send = z2_mgr.send_raw_message_to_cell
+        orig_send = z2_mgr._send_raw_message_to_cell
         info = {}
 
-        def send_raw_message_to_cell(context, cell, message,
+        def _send_raw_message_to_cell(context, cell, message,
                 dest_host=None):
             # Catch response coming up and store the dest_host
             # so we can make sure responses send to the
@@ -213,8 +213,8 @@ class CellsManagerClassTestCase(test.TestCase):
             return orig_send(context, cell, message,
                     dest_host=dest_host)
 
-        self.stubs.Set(z2_mgr, 'send_raw_message_to_cell',
-                send_raw_message_to_cell)
+        self.stubs.Set(z2_mgr, '_send_raw_message_to_cell',
+                _send_raw_message_to_cell)
 
         result = self.cells_manager.route_message(fake_context, **args)
         self.assertEqual(result, fakes.TEST_METHOD_EXPECTED_RESULT)
@@ -502,9 +502,9 @@ class CellsManagerClassTestCase(test.TestCase):
         self.cells_manager.instance_destroy(fake_context, instance_info)
         self.assertEqual(call_info['instance_destroy'], 0)
 
-    def test_send_raw_message_to_cell_passes_to_driver(self):
+    def test__send_raw_message_to_cell_passes_to_driver(self):
         # We can't use self.cells_manager because it has stubbed
-        # send_raw_message_to_cell
+        # _send_raw_message_to_cell
         mgr = cells_manager.CellsManager(
                 cells_driver_cls=fakes.FakeCellsDriver,
                 cells_scheduler_cls=fakes.FakeCellsScheduler)
@@ -524,7 +524,7 @@ class CellsManagerClassTestCase(test.TestCase):
         self.stubs.Set(mgr.driver, 'send_message_to_cell',
                 fake_send_message_to_cell)
 
-        mgr.send_raw_message_to_cell(fake_context, fake_cell, fake_message)
+        mgr._send_raw_message_to_cell(fake_context, fake_cell, fake_message)
         self.assertEqual(call_info['send_message'], 1)
 
     def test_schedule_calls_get_proxied(self):
@@ -665,15 +665,15 @@ class CellsManagerClassTestCase(test.TestCase):
 
         call_info = {'broadcast': 0}
 
-        def send_raw_message_to_cells(context, cells, bcast_message):
+        def _send_raw_message_to_cells(context, cells, bcast_message):
             self.assertEqual(context, fake_context)
             self.assertEqual(bcast_message['method'], 'broadcast_message')
             message = bcast_message['args']['message']
             call_info['method'] = message['method']
             call_info['broadcast'] += 1
 
-        self.stubs.Set(self.cells_manager, 'send_raw_message_to_cells',
-                send_raw_message_to_cells)
+        self.stubs.Set(self.cells_manager, '_send_raw_message_to_cells',
+                _send_raw_message_to_cells)
 
         instance = {'uuid': 'fake', 'deleted': True}
         self.cells_manager._sync_instance(fake_context, instance)

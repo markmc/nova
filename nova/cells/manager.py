@@ -325,7 +325,7 @@ class CellsManager(manager.Manager):
         msg = {'method': 'update_capabilities',
                'args': {'cell_name': self.my_cell_info.name,
                         'capabilities': capabs}}
-        self.send_raw_message_to_cells(context,
+        self._send_raw_message_to_cells(context,
                     self._get_parent_cells(), msg, fanout=True)
 
     def _add_to_dict(self, target, src):
@@ -352,7 +352,7 @@ class CellsManager(manager.Manager):
         msg = {'method': 'update_capacities',
                'args': {'cell_name': self.my_cell_info.name,
                         'capacities': capacities}}
-        self.send_raw_message_to_cells(context,
+        self._send_raw_message_to_cells(context,
                     self._get_parent_cells(), msg, fanout=True)
 
     def update_capabilities(self, context, cell_name, capabilities):
@@ -391,7 +391,7 @@ class CellsManager(manager.Manager):
         bcast_msg = cells_utils.form_broadcast_message('down',
                 'announce_capabilities', {},
                 routing_path=self.our_path, hopcount=1)
-        self.send_raw_message_to_cells(context,
+        self._send_raw_message_to_cells(context,
                 self._get_child_cells(), bcast_msg)
 
     def _ask_children_for_capacities(self, context):
@@ -401,7 +401,7 @@ class CellsManager(manager.Manager):
         bcast_msg = cells_utils.form_broadcast_message('down',
                 'announce_capacities', {},
                 routing_path=self.our_path, hopcount=1)
-        self.send_raw_message_to_cells(context,
+        self._send_raw_message_to_cells(context,
                 self._get_child_cells(), bcast_msg)
 
     def _get_child_cells(self):
@@ -420,7 +420,7 @@ class CellsManager(manager.Manager):
         fn = getattr(self, method)
         return fn(context, routing_path=routing_path, **args)
 
-    def send_raw_message_to_cell(self, context, cell, message,
+    def _send_raw_message_to_cell(self, context, cell, message,
             dest_host=None, fanout=False):
         """Send a raw message to a cell."""
         self.driver.send_message_to_cell(context, cell, dest_host, message,
@@ -435,12 +435,12 @@ class CellsManager(manager.Manager):
             return self._process_message_for_me(context, message['message'])
         self.driver.send_message_to_cell(context, next_hop, None, message)
 
-    def send_raw_message_to_cells(self, context, cells, msg, dest_host=None,
+    def _send_raw_message_to_cells(self, context, cells, msg, dest_host=None,
             fanout=False, ignore_exceptions=True):
         """Send a broadcast message to multiple cells."""
         for cell in cells:
             try:
-                self.send_raw_message_to_cell(context, cell, msg,
+                self._send_raw_message_to_cell(context, cell, msg,
                         dest_host=dest_host, fanout=fanout)
             except Exception, e:
                 if not ignore_exceptions:
@@ -491,7 +491,7 @@ class CellsManager(manager.Manager):
         routing_message = cells_utils.form_routing_message(dest_cell,
                 direction, 'send_response', kwargs,
                 routing_path=resp_routing_path)
-        self.send_raw_message_to_cell(context, next_hop, routing_message,
+        self._send_raw_message_to_cell(context, next_hop, routing_message,
                 dest_host=hop_host)
 
     def send_response(self, context, response_uuid, result_info, **kwargs):
@@ -539,7 +539,7 @@ class CellsManager(manager.Manager):
                     dest_cell_name, direction, message['method'],
                     message['args'], response_uuid=resp_uuid,
                     routing_path=routing_path)
-            self.send_raw_message_to_cell(context, next_hop,
+            self._send_raw_message_to_cell(context, next_hop,
                     routing_message, dest_host=hop_host)
 
     @cells_utils.update_routing_path
@@ -622,7 +622,7 @@ class CellsManager(manager.Manager):
             cells = self._get_parent_cells()
         else:
             cells = self._get_child_cells()
-        self.send_raw_message_to_cells(context, cells, bcast_msg)
+        self._send_raw_message_to_cells(context, cells, bcast_msg)
         # Now let's process it.
         self._process_message_for_me(context, message,
                 routing_path=routing_path, **kwargs)
@@ -759,7 +759,7 @@ class CellsManager(manager.Manager):
         else:
             msg = cells_utils.form_instance_update_broadcast_message(
                 instance, routing_path=self.our_path, hopcount=1)
-        self.send_raw_message_to_cells(context,
+        self._send_raw_message_to_cells(context,
                 self._get_parent_cells(), msg)
 
     def sync_instances(self, context, routing_path, project_id=None,

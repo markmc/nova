@@ -120,7 +120,7 @@ class FakeCellsManager(manager.CellsManager):
         self._test_call_info['routing_path'] = routing_path
         return TEST_METHOD_EXPECTED_RESULT
 
-    def send_raw_message_to_cell(self, context, cell, message,
+    def _send_raw_message_to_cell(self, context, cell, message,
             dest_host=None, fanout=False):
         self._test_call_info['send_message'] += 1
         if fanout:

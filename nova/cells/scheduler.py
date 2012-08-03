@@ -180,7 +180,7 @@ class CellsScheduler(base.Base):
                 else:
                     # Forward request to cell
                     fwd_msg['method'] = 'schedule_run_instance'
-                    self.manager.send_raw_message_to_cell(context,
+                    self.manager._send_raw_message_to_cell(context,
                             cell, fwd_msg)
                 return
             except Exception:
