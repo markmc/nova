@@ -111,8 +111,8 @@ class CellInfo(object):
     def get_cell_info(self):
         """Return subset of cell information for OS API use.
         """
-        db_fields_to_return = ['id', 'is_parent', 'weight_scale',
-                'weight_offset', 'username', 'rpc_host', 'rpc_port']
+        db_fields_to_return = ['id', 'is_parent',
+                               'username', 'rpc_host', 'rpc_port']
         cell_info = dict(name=self.name, capabilities=self.capabilities)
         if self.db_info:
             for field in db_fields_to_return:

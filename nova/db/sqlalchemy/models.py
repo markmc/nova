@@ -831,8 +831,8 @@ class Cell(BASE, NovaBase):
     api_url = Column(String(255))
     username = Column(String(255))
     password = Column(String(255))
-    weight_offset = Column(Float(), default=0.0)
-    weight_scale = Column(Float(), default=1.0)
+    weight_offset = Column(Float(), default=0.0)  # FIXME(markmc): unused
+    weight_scale = Column(Float(), default=1.0)   # FIXME(markmc): unused
     is_parent = Column(Boolean())
     rpc_host = Column(String(255))
     rpc_port = Column(Integer())

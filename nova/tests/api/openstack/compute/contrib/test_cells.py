@@ -33,10 +33,8 @@ FLAGS = flags.FLAGS
 
 FAKE_CELLS = [
         dict(id=1, name='cell1', username='bob', is_parent=True,
-                weight_scale=1.0, weight_offset=0.0,
                 rpc_host='r1.example.org', password='xxxx'),
         dict(id=2, name='cell2', username='alice', is_parent=False,
-                weight_scale=1.0, weight_offset=0.0,
                 rpc_host='r2.example.org', password='qwerty')]
 
 
