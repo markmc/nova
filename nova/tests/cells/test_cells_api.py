@@ -22,7 +22,7 @@ from nova import flags
 from nova.openstack.common import rpc
 from nova import test
 
-
+flags.DECLARE('cells', 'nova.cells.opts')
 FLAGS = flags.FLAGS
 
 
@@ -51,7 +51,7 @@ class CellsAPITestCase(test.TestCase):
 
         def fake_rpc_call(context, topic, message):
             self.assertEqual(context, fake_context)
-            self.assertEqual(topic, FLAGS.cells_topic)
+            self.assertEqual(topic, FLAGS.cells.topic)
             self.assertEqual(message, fake_wrapped_message)
             return fake_response
 
@@ -84,7 +84,7 @@ class CellsAPITestCase(test.TestCase):
 
         def fake_rpc_cast(context, topic, message):
             self.assertEqual(context, fake_context)
-            self.assertEqual(topic, FLAGS.cells_topic)
+            self.assertEqual(topic, FLAGS.cells.topic)
             self.assertEqual(message, fake_wrapped_message)
             call_info['cast_called'] += 1
 
@@ -113,7 +113,7 @@ class CellsAPITestCase(test.TestCase):
 
         def fake_rpc_cast(context, topic, message):
             self.assertEqual(context, fake_context)
-            self.assertEqual(topic, FLAGS.cells_topic)
+            self.assertEqual(topic, FLAGS.cells.topic)
             self.assertEqual(message, fake_wrapped_message)
             call_info['cast_called'] += 1
 
@@ -226,7 +226,7 @@ class CellsAPITestCase(test.TestCase):
 
         def fake_rpc_cast(context, topic, message):
             self.assertEqual(context, fake_context)
-            self.assertEqual(topic, FLAGS.cells_topic)
+            self.assertEqual(topic, FLAGS.cells.topic)
             self.assertEqual(message, expected_message)
             call_info['cast_called'] += 1
 
@@ -237,7 +237,7 @@ class CellsAPITestCase(test.TestCase):
         self.assertEqual(call_info['cast_called'], 1)
 
     def test_instance_update(self):
-        self.flags(enable_cells=True)
+        self.flags(enable=True, group='cells')
         fake_context = 'fake_context'
         fake_instance = 'fake_instance'
         fake_formed_message = 'fake_formed_message'
@@ -250,7 +250,7 @@ class CellsAPITestCase(test.TestCase):
 
         def fake_rpc_cast(context, topic, message):
             self.assertEqual(context, fake_context)
-            self.assertEqual(topic, FLAGS.cells_topic)
+            self.assertEqual(topic, FLAGS.cells.topic)
             self.assertEqual(message, fake_formed_message)
             call_info['cast_called'] += 1
 
@@ -263,7 +263,7 @@ class CellsAPITestCase(test.TestCase):
         self.assertEqual(call_info['cast_called'], 1)
 
     def test_instance_destroy(self):
-        self.flags(enable_cells=True)
+        self.flags(enable=True, group='cells')
         fake_context = 'fake_context'
         fake_instance = 'fake_instance'
         fake_formed_message = 'fake_formed_message'
@@ -276,7 +276,7 @@ class CellsAPITestCase(test.TestCase):
 
         def fake_rpc_cast(context, topic, message):
             self.assertEqual(context, fake_context)
-            self.assertEqual(topic, FLAGS.cells_topic)
+            self.assertEqual(topic, FLAGS.cells.topic)
             self.assertEqual(message, fake_formed_message)
             call_info['cast_called'] += 1
 
@@ -289,7 +289,7 @@ class CellsAPITestCase(test.TestCase):
         self.assertEqual(call_info['cast_called'], 1)
 
     def test_sync_instances(self):
-        self.flags(enable_cells=True)
+        self.flags(enable=True, group='cells')
         fake_context = 'fake_context'
         fake_formed_message = 'fake_formed_message'
         fake_updated_since = 'fake_updated_since'
@@ -309,7 +309,7 @@ class CellsAPITestCase(test.TestCase):
 
         def fake_rpc_cast(context, topic, message):
             self.assertEqual(context, fake_context)
-            self.assertEqual(topic, FLAGS.cells_topic)
+            self.assertEqual(topic, FLAGS.cells.topic)
             self.assertEqual(message, fake_formed_message)
             call_info['cast_called'] += 1
 

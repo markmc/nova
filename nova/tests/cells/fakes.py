@@ -21,9 +21,10 @@ from nova.cells import utils as cells_utils
 from nova import context
 from nova import flags
 
+flags.DECLARE('cells', 'nova.cells.opts')
 FLAGS = flags.FLAGS
 
-MY_CELL_NAME = FLAGS.cell_name
+MY_CELL_NAME = FLAGS.cells.name
 FAKE_CELLS = {}
 
 FAKE_CELLS_REFRESH = [dict(id=5, name='cell1', is_parent=False),
@@ -44,7 +45,7 @@ def init():
     global FAKE_CELL_NAME
 
     # cell_name could have been changed after this module was loaded
-    MY_CELL_NAME = FLAGS.cell_name
+    MY_CELL_NAME = FLAGS.cells.name
     FAKE_CELLS = {
             MY_CELL_NAME: [dict(id=1, name='cell1', is_parent=True),
                            dict(id=2, name='cell2', is_parent=False),

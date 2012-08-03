@@ -24,6 +24,8 @@ from nova.openstack.common import rpc
 
 LOG = logging.getLogger('nova.cells.api')
 
+flags.DECLARE('cells', 'nova.cells.opts')
+
 FLAGS = flags.FLAGS
 
 
@@ -31,21 +33,21 @@ def cell_call(context, cell_name, method, **kwargs):
     """Route a call to a specific cell."""
     routing_message = cells_utils.form_routing_message(cell_name,
             'down', method, kwargs, need_response=True)
-    return rpc.call(context, FLAGS.cells_topic, routing_message)
+    return rpc.call(context, FLAGS.cells.topic, routing_message)
 
 
 def cell_cast(context, cell_name, method, **kwargs):
     """Route a cast to a specific cell."""
     routing_message = cells_utils.form_routing_message(cell_name,
             'down', method, kwargs)
-    rpc.cast(context, FLAGS.cells_topic, routing_message)
+    rpc.cast(context, FLAGS.cells.topic, routing_message)
 
 
 def cell_broadcast(context, direction, method, **kwargs):
     """Route a cast to a specific cell."""
     bcast_message = cells_utils.form_broadcast_message(direction, method,
             kwargs)
-    rpc.cast(context, FLAGS.cells_topic, bcast_message)
+    rpc.cast(context, FLAGS.cells.topic, bcast_message)
 
 
 def broadcast_service_api_method(context, service_name, method, *args,
@@ -88,7 +90,7 @@ def schedule_run_instance(context, **kwargs):
     """Schedule a new instance for creation."""
     message = {'method': 'schedule_run_instance',
                'args': kwargs}
-    rpc.cast(context, FLAGS.cells_topic, message)
+    rpc.cast(context, FLAGS.cells.topic, message)
 
 
 def call_dbapi_method(context, method, *args, **kwargs):
@@ -99,30 +101,30 @@ def call_dbapi_method(context, method, *args, **kwargs):
     bcast_message = cells_utils.form_broadcast_message('up',
             'call_dbapi_method',
             {'db_method_info': db_method_info})
-    rpc.cast(context, FLAGS.cells_topic, bcast_message)
+    rpc.cast(context, FLAGS.cells.topic, bcast_message)
 
 
 def instance_update(context, instance):
     """Broadcast upwards that an instance was updated."""
-    if not FLAGS.enable_cells:
+    if not FLAGS.cells.enable:
         return
     bcast_message = cells_utils.form_instance_update_broadcast_message(
             instance)
-    rpc.cast(context, FLAGS.cells_topic, bcast_message)
+    rpc.cast(context, FLAGS.cells.topic, bcast_message)
 
 
 def instance_destroy(context, instance):
     """Broadcast upwards that an instance was destroyed."""
-    if not FLAGS.enable_cells:
+    if not FLAGS.cells.enable:
         return
     bcast_message = cells_utils.form_instance_destroy_broadcast_message(
             instance)
-    rpc.cast(context, FLAGS.cells_topic, bcast_message)
+    rpc.cast(context, FLAGS.cells.topic, bcast_message)
 
 
 def instance_fault_create(context, instance_fault):
     """Broadcast upwards that an instance fault was created."""
-    if not FLAGS.enable_cells:
+    if not FLAGS.cells.enable:
         return
     instance_fault = dict(instance_fault.iteritems())
     items_to_remove = ['id']
@@ -133,14 +135,14 @@ def instance_fault_create(context, instance_fault):
 
 def bw_usage_update(context, *args, **kwargs):
     """Broadcast upwards that bw_usage was updated."""
-    if not FLAGS.enable_cells:
+    if not FLAGS.cells.enable:
         return
     call_dbapi_method(context, 'bw_usage_update', *args, **kwargs)
 
 
 def instance_metadata_update(context, *args, **kwargs):
     """Broadcast upwards that bw_usage was updated."""
-    if not FLAGS.enable_cells:
+    if not FLAGS.cells.enable:
         return
     call_dbapi_method(context, 'instance_metadata_update', *args, **kwargs)
 
@@ -149,16 +151,16 @@ def get_all_cell_info(context):
     """Get the list of cells and their information from the manager."""
     msg = {'method': 'get_cell_info',
            'args': {}}
-    return rpc.call(context, FLAGS.cells_topic, msg)
+    return rpc.call(context, FLAGS.cells.topic, msg)
 
 
 def sync_instances(context, project_id=None, updated_since=None,
         deleted=False):
     """Broadcast message down to tell cells to sync instance data."""
-    if not FLAGS.enable_cells:
+    if not FLAGS.cells.enable:
         return
     bcast_message = cells_utils.form_broadcast_message('down',
             'sync_instances', {'project_id': project_id,
                                'updated_since': updated_since,
                                'deleted': deleted})
-    rpc.cast(context, FLAGS.cells_topic, bcast_message)
+    rpc.cast(context, FLAGS.cells.topic, bcast_message)

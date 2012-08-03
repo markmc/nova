@@ -46,37 +46,40 @@ from nova import utils
 from nova import volume
 
 flag_opts = [
-        cfg.StrOpt('cells_driver',
+        cfg.StrOpt('driver',
                 default='nova.cells.rpc_driver.CellsRPCDriver',
                 help='Cells driver to use'),
-        cfg.StrOpt('cells_scheduler',
+        cfg.StrOpt('scheduler',
                 default='nova.cells.scheduler.CellsScheduler',
                 help='Cells scheduler to use'),
-        cfg.IntOpt('cell_db_check_interval',
+        cfg.IntOpt('db_check_interval',
                 default=60,
                 help='Seconds between getting fresh cell info from db.'),
-        cfg.IntOpt('cell_call_timeout',
+        cfg.IntOpt('call_timeout',
                 default=60,
                 help='Seconds to wait for response from a call to a cell.'),
-        cfg.IntOpt('cell_max_broadcast_hop_count',
+        cfg.IntOpt('max_broadcast_hop_count',
                 default=10,
                 help='Maximum number of hops for a broadcast message.'),
-        cfg.IntOpt("cell_instance_update_interval",
+        cfg.IntOpt("instance_update_interval",
                 default=60,
                 help="Number of seconds between cell instance updates"),
-        cfg.IntOpt("cell_instance_updated_at_threshold",
+        cfg.IntOpt("instance_updated_at_threshold",
                 default=3600,
                 help="Number of seconds after an instance was updated "
                         "or deleted to continue to update cells"),
-        cfg.IntOpt("cell_instance_update_num_instances",
+        cfg.IntOpt("instance_update_num_instances",
                 default=1,
                 help="Number of instances to update per periodic task run")
 ]
 
 
 LOG = logging.getLogger('nova.cells.manager')
+
+flags.DECLARE('cells', 'nova.cells.opts')
+
 FLAGS = flags.FLAGS
-FLAGS.register_opts(flag_opts)
+FLAGS.register_opts(flag_opts, group='cells')
 
 
 class CellInfo(object):
@@ -127,18 +130,18 @@ class CellsManager(manager.Manager):
                         'network': network.API(),
                         'volume': volume.API()}
         if not cells_driver_cls:
-            cells_driver_cls = importutils.import_class(FLAGS.cells_driver)
+            cells_driver_cls = importutils.import_class(FLAGS.cells.driver)
         if not cells_scheduler_cls:
             cells_scheduler_cls = importutils.import_class(
-                    FLAGS.cells_scheduler)
+                    FLAGS.cells.scheduler)
         if not cell_info_cls:
             cell_info_cls = CellInfo
         self.driver = cells_driver_cls(self)
         self.scheduler = cells_scheduler_cls(self)
         self.cell_info_cls = cell_info_cls
-        self.my_cell_info = cell_info_cls(FLAGS.cell_name, is_me=True)
+        self.my_cell_info = cell_info_cls(FLAGS.cells.name, is_me=True)
         my_cell_capabs = {}
-        for cap in FLAGS.cell_capabilities:
+        for cap in FLAGS.cells.capabilities:
             name, value = cap.split('=', 1)
             if ';' in value:
                 values = set(value.split(';'))
@@ -233,7 +236,7 @@ class CellsManager(manager.Manager):
         periodically to refresh the cell states.
         """
         diff = timeutils.utcnow() - self.last_cell_db_check
-        if diff.seconds >= FLAGS.cell_db_check_interval:
+        if diff.seconds >= FLAGS.cells.db_check_interval:
             LOG.debug(_("Updating cell cache from db."))
             self.last_cell_db_check = timeutils.utcnow()
             self._refresh_cells_from_db(context)
@@ -584,7 +587,7 @@ class CellsManager(manager.Manager):
             return
 
         if resp_queue:
-            wait_time = FLAGS.cell_call_timeout
+            wait_time = FLAGS.cells.call_timeout
             try:
                 result = resp_queue.get(timeout=wait_time)
             except queue.Empty:
@@ -603,7 +606,7 @@ class CellsManager(manager.Manager):
         process it locally.
         """
 
-        max_hops = FLAGS.cell_max_broadcast_hop_count
+        max_hops = FLAGS.cells.max_broadcast_hop_count
         if hopcount > max_hops:
             detail = _("Broadcast message '%(message)s' reached max hop "
                     "count: %(hopcount)s > %(max_hops)s") % locals()
@@ -698,7 +701,7 @@ class CellsManager(manager.Manager):
         parent cells.
         """
 
-        interval = FLAGS.cell_instance_update_interval
+        interval = FLAGS.cells.instance_update_interval
         if not interval:
             return
         curr_time = time.time()
@@ -714,7 +717,7 @@ class CellsManager(manager.Manager):
             except StopIteration:
                 if info['updated_list']:
                     return
-                threshold = FLAGS.cell_instance_updated_at_threshold
+                threshold = FLAGS.cells.instance_updated_at_threshold
                 updated_since = None
                 if threshold > 0:
                     updated_since = timeutils.utcnow() - datetime.timedelta(
@@ -731,7 +734,7 @@ class CellsManager(manager.Manager):
 
         rd_context = context.elevated(read_deleted='yes')
 
-        for i in xrange(FLAGS.cell_instance_update_num_instances):
+        for i in xrange(FLAGS.cells.instance_update_num_instances):
             while True:
                 # Yield to other greenthreads
                 time.sleep(0)
