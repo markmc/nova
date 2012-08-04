@@ -428,13 +428,6 @@ class VolumeAttachmentController(object):
         return {'volumeAttachments': results}
 
 
-class BootFromVolumeController(servers.Controller):
-    """The boot from volume API controller for the OpenStack API."""
-
-    def _get_block_device_mapping(self, data):
-        return data.get('block_device_mapping')
-
-
 def _translate_snapshot_detail_view(context, vol):
     """Maps keys for snapshots details view."""
 
@@ -597,7 +590,7 @@ class Volumes(extensions.ExtensionDescriptor):
                                                 collection_name='servers'))
         resources.append(res)
 
-        controller = BootFromVolumeController(self.ext_mgr)
+        controller = servers.Controller(self.ext_mgr)
         res = extensions.ResourceExtension('os-volumes_boot', controller,
                                            inherits='servers')
         resources.append(res)
