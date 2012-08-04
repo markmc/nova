@@ -132,7 +132,11 @@ class APIRouter(base_wsgi.Router):
             LOG.debug(_('Extended resource: %s'),
                       resource.collection)
 
-            wsgi_resource = wsgi.Resource(resource.controller)
+            inherits = None
+            if resource.inherits:
+                inherits = self.resources.get(resource.inherits)
+            wsgi_resource = wsgi.Resource(resource.controller,
+                                          inherits=inherits)
             self.resources[resource.collection] = wsgi_resource
             kargs = dict(
                 controller=wsgi_resource,

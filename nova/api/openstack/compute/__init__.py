@@ -118,3 +118,4 @@ class APIRouter(nova.api.openstack.APIRouter):
                        controller=server_metadata_controller,
                        action='update_all',
                        conditions={"method": ['PUT']})
+        ext_mgr.resources = self.resources
