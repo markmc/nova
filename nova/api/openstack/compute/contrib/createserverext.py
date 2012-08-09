@@ -28,8 +28,6 @@ class Createserverext(extensions.ExtensionDescriptor):
     updated = "2011-07-19T00:00:00+00:00"
 
     def get_resources(self):
-        controller = servers.Controller(self.ext_mgr)
         res = extensions.ResourceExtension('os-create-server-ext',
-                                           controller=controller,
                                            inherits='servers')
         return [res]

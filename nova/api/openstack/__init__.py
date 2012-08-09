@@ -135,6 +135,7 @@ class APIRouter(base_wsgi.Router):
             inherits = None
             if resource.inherits:
                 inherits = self.resources.get(resource.inherits)
+                resource.controller = inherits.controller
             wsgi_resource = wsgi.Resource(resource.controller,
                                           inherits=inherits)
             self.resources[resource.collection] = wsgi_resource

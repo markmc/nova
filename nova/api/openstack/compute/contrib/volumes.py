@@ -590,8 +590,7 @@ class Volumes(extensions.ExtensionDescriptor):
                                                 collection_name='servers'))
         resources.append(res)
 
-        controller = servers.Controller(self.ext_mgr)
-        res = extensions.ResourceExtension('os-volumes_boot', controller,
+        res = extensions.ResourceExtension('os-volumes_boot',
                                            inherits='servers')
         resources.append(res)
 
