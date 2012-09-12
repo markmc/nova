@@ -900,13 +900,6 @@ class ServersControllerTest(test.TestCase):
         self.assertEqual(len(servers), 1)
         self.assertEqual(servers[0]['id'], server_uuid)
 
-    def test_update_server_no_body(self):
-        req = fakes.HTTPRequest.blank('/v2/fake/servers/%s' % FAKE_UUID)
-        req.method = 'PUT'
-
-        self.assertRaises(webob.exc.HTTPUnprocessableEntity,
-                          self.controller.update, req, FAKE_UUID, None)
-
     def test_update_server_all_attributes(self):
         self.stubs.Set(nova.db, 'instance_get',
                 fakes.fake_instance_get(name='server_test',
@@ -4788,45 +4781,41 @@ class ServerXMLSerializationTest(test.TestCase):
                                  str(ip['addr']))
 
 
-class ServersAllExtensionsTestCase(test.TestCase):
+class ServersUnprocessableEntityTestCase(test.TestCase):
     """
-    Servers tests using default API router with all extensions enabled.
+    Tests of places we throw 422 Unprocessable Entity from
     """
 
     def setUp(self):
-        super(ServersAllExtensionsTestCase, self).setUp()
-        self.app = nova.api.openstack.compute.APIRouter()
+        super(ServersUnprocessableEntityTestCase, self).setUp()
+        self.ext_mgr = extensions.ExtensionManager()
+        self.ext_mgr.extensions = {}
+        self.controller = servers.Controller(self.ext_mgr)
 
-    def test_create_missing_server(self):
-        """Test create with malformed body"""
-
-        def fake_create(*args, **kwargs):
-            raise test.TestingException("Should not reach the compute API.")
-
-        self.stubs.Set(nova.compute.api.API, 'create', fake_create)
-
-        req = fakes.HTTPRequest.blank('/fake/servers')
+    def _unprocessable_server_create(self, body):
+        req = fakes.HTTPRequest.blank('/v2/fake/servers')
         req.method = 'POST'
-        req.content_type = 'application/json'
+
+        self.assertRaises(webob.exc.HTTPUnprocessableEntity,
+                          self.controller.create, req, body)
+
+    def test_create_server_no_body(self):
+        self._unprocessable_server_create(body=None)
+
+    def test_create_server_missing_server(self):
         body = {'foo': {'a': 'b'}}
+        self._unprocessable_server_create(body=body)
 
-        req.body = jsonutils.dumps(body)
-        res = req.get_response(self.app)
-        self.assertEqual(422, res.status_int)
-
-    def test_update_missing_server(self):
-        """Test create with malformed body"""
-
-        def fake_update(*args, **kwargs):
-            raise test.TestingException("Should not reach the compute API.")
-
-        self.stubs.Set(nova.compute.api.API, 'create', fake_update)
-
-        req = fakes.HTTPRequest.blank('/fake/servers/1')
+    def _unprocessable_server_update(self, body):
+        req = fakes.HTTPRequest.blank('/v2/fake/servers/%s' % FAKE_UUID)
         req.method = 'PUT'
-        req.content_type = 'application/json'
-        body = {'foo': {'a': 'b'}}
 
-        req.body = jsonutils.dumps(body)
-        res = req.get_response(self.app)
-        self.assertEqual(422, res.status_int)
+        self.assertRaises(webob.exc.HTTPUnprocessableEntity,
+                          self.controller.update, req, FAKE_UUID, body)
+
+    def test_update_server_no_body(self):
+        self._unprocessable_server_update(body=None)
+
+    def test_update_server_missing_server(self):
+        body = {'foo': {'a': 'b'}}
+        self._unprocessable_server_update(body=body)
