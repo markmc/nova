@@ -60,6 +60,7 @@ from nova import block_device
 from nova.compute import instance_types
 from nova.compute import power_state
 from nova.compute import vm_mode
+from nova import config
 from nova import context as nova_context
 from nova import db
 from nova import exception
@@ -76,7 +77,7 @@ from nova.virt import configdrive
 from nova.virt.disk import api as disk
 from nova.virt import driver
 from nova.virt import firewall
-from nova.virt.libvirt import config
+from nova.virt.libvirt import config as vconfig
 from nova.virt.libvirt import firewall as libvirt_firewall
 from nova.virt.libvirt import imagebackend
 from nova.virt.libvirt import imagecache
@@ -188,8 +189,9 @@ libvirt_opts = [
 FLAGS = flags.FLAGS
 FLAGS.register_opts(libvirt_opts)
 
-flags.DECLARE('live_migration_retry_count', 'nova.compute.manager')
-flags.DECLARE('vncserver_proxyclient_address', 'nova.vnc')
+CONF = config.CONF
+CONF.import_opt('live_migration_retry_count', 'nova.compute.manager')
+CONF.import_opt('vncserver_proxyclient_address', 'nova.vnc')
 
 DEFAULT_FIREWALL_DRIVER = "%s.%s" % (
     libvirt_firewall.__name__,
@@ -1468,7 +1470,7 @@ class LibvirtDriver(driver.ComputeDriver):
            the capabilities of the host"""
         xmlstr = self._conn.getCapabilities()
 
-        caps = config.LibvirtConfigCaps()
+        caps = vconfig.LibvirtConfigCaps()
         caps.parse_str(xmlstr)
         return caps
 
@@ -1479,7 +1481,7 @@ class LibvirtDriver(driver.ComputeDriver):
 
         caps = self.get_host_capabilities()
         hostcpu = caps.host.cpu
-        guestcpu = config.LibvirtConfigGuestCPU()
+        guestcpu = vconfig.LibvirtConfigGuestCPU()
 
         guestcpu.model = hostcpu.model
         guestcpu.vendor = hostcpu.vendor
@@ -1488,7 +1490,7 @@ class LibvirtDriver(driver.ComputeDriver):
         guestcpu.match = "exact"
 
         for hostfeat in hostcpu.features:
-            guestfeat = config.LibvirtConfigGuestCPUFeature(hostfeat.name)
+            guestfeat = vconfig.LibvirtConfigGuestCPUFeature(hostfeat.name)
             guestfeat.policy = "require"
 
         return guestcpu
@@ -1528,11 +1530,11 @@ class LibvirtDriver(driver.ComputeDriver):
         # updated to be at least this new, we can kill off the elif
         # blocks here
         if self.has_min_version(MIN_LIBVIRT_HOST_CPU_VERSION):
-            cpu = config.LibvirtConfigGuestCPU()
+            cpu = vconfig.LibvirtConfigGuestCPU()
             cpu.mode = mode
             cpu.model = model
         elif mode == "custom":
-            cpu = config.LibvirtConfigGuestCPU()
+            cpu = vconfig.LibvirtConfigGuestCPU()
             cpu.model = model
         elif mode == "host-model":
             cpu = self.get_host_cpu_for_guest()
@@ -1553,7 +1555,7 @@ class LibvirtDriver(driver.ComputeDriver):
             block_device_info)
 
         if FLAGS.libvirt_type == "lxc":
-            fs = config.LibvirtConfigGuestFilesys()
+            fs = vconfig.LibvirtConfigGuestFilesys()
             fs.source_type = "mount"
             fs.source_dir = os.path.join(FLAGS.instances_path,
                                          instance['name'],
@@ -1659,7 +1661,7 @@ class LibvirtDriver(driver.ComputeDriver):
                     devices.append(cfg)
 
             if configdrive.enabled_for(instance):
-                diskconfig = config.LibvirtConfigGuestDisk()
+                diskconfig = vconfig.LibvirtConfigGuestDisk()
                 diskconfig.source_type = "file"
                 diskconfig.driver_format = "raw"
                 diskconfig.driver_cache = self.disk_cachemode
@@ -1684,7 +1686,7 @@ class LibvirtDriver(driver.ComputeDriver):
         inst_type_id = instance['instance_type_id']
         inst_type = instance_types.get_instance_type(inst_type_id)
 
-        guest = config.LibvirtConfigGuest()
+        guest = vconfig.LibvirtConfigGuest()
         guest.virt_type = FLAGS.libvirt_type
         guest.name = instance['name']
         guest.uuid = instance['uuid']
@@ -1761,18 +1763,18 @@ class LibvirtDriver(driver.ComputeDriver):
         if FLAGS.libvirt_type != "lxc" and FLAGS.libvirt_type != "uml":
             guest.acpi = True
 
-        clk = config.LibvirtConfigGuestClock()
+        clk = vconfig.LibvirtConfigGuestClock()
         clk.offset = "utc"
         guest.set_clock(clk)
 
         if FLAGS.libvirt_type == "kvm":
             # TODO(berrange) One day this should be per-guest
             # OS type configurable
-            tmpit = config.LibvirtConfigGuestTimer()
+            tmpit = vconfig.LibvirtConfigGuestTimer()
             tmpit.name = "pit"
             tmpit.tickpolicy = "delay"
 
-            tmrtc = config.LibvirtConfigGuestTimer()
+            tmrtc = vconfig.LibvirtConfigGuestTimer()
             tmrtc.name = "rtc"
             tmrtc.tickpolicy = "catchup"
 
@@ -1797,29 +1799,29 @@ class LibvirtDriver(driver.ComputeDriver):
             # client app is connected. Thus we can't get away
             # with a single type=pty console. Instead we have
             # to configure two separate consoles.
-            consolelog = config.LibvirtConfigGuestSerial()
+            consolelog = vconfig.LibvirtConfigGuestSerial()
             consolelog.type = "file"
             consolelog.source_path = os.path.join(FLAGS.instances_path,
                                                   instance['name'],
                                                   "console.log")
             guest.add_device(consolelog)
 
-            consolepty = config.LibvirtConfigGuestSerial()
+            consolepty = vconfig.LibvirtConfigGuestSerial()
             consolepty.type = "pty"
             guest.add_device(consolepty)
         else:
-            consolepty = config.LibvirtConfigGuestConsole()
+            consolepty = vconfig.LibvirtConfigGuestConsole()
             consolepty.type = "pty"
             guest.add_device(consolepty)
 
         if FLAGS.vnc_enabled and FLAGS.libvirt_type not in ('lxc', 'uml'):
             if FLAGS.use_usb_tablet and guest.os_type == vm_mode.HVM:
-                tablet = config.LibvirtConfigGuestInput()
+                tablet = vconfig.LibvirtConfigGuestInput()
                 tablet.type = "tablet"
                 tablet.bus = "usb"
                 guest.add_device(tablet)
 
-            graphics = config.LibvirtConfigGuestGraphics()
+            graphics = vconfig.LibvirtConfigGuestGraphics()
             graphics.type = "vnc"
             graphics.keymap = FLAGS.vnc_keymap
             graphics.listen = FLAGS.vncserver_listen
@@ -2358,7 +2360,7 @@ class LibvirtDriver(driver.ComputeDriver):
         """
         info = jsonutils.loads(cpu_info)
         LOG.info(_('Instance launched has CPU info:\n%s') % cpu_info)
-        cpu = config.LibvirtConfigCPU()
+        cpu = vconfig.LibvirtConfigCPU()
         cpu.arch = info['arch']
         cpu.model = info['model']
         cpu.vendor = info['vendor']
