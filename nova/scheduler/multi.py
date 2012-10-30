@@ -21,6 +21,7 @@
 Scheduler that allows routing some calls to one driver and others to another.
 """
 
+from nova import config
 from nova import flags
 from nova.openstack.common import cfg
 from nova.openstack.common import importutils
@@ -40,8 +41,8 @@ multi_scheduler_opts = [
                help='Default driver to use for scheduling calls'),
     ]
 
-FLAGS = flags.FLAGS
-FLAGS.register_opts(multi_scheduler_opts)
+CONF = config.CONF
+CONF.register_opts(multi_scheduler_opts)
 
 
 class MultiScheduler(driver.Scheduler):
@@ -55,11 +56,11 @@ class MultiScheduler(driver.Scheduler):
     def __init__(self):
         super(MultiScheduler, self).__init__()
         compute_driver = importutils.import_object(
-                FLAGS.compute_scheduler_driver)
+                CONF.compute_scheduler_driver)
         volume_driver = importutils.import_object(
-                FLAGS.volume_scheduler_driver)
+                CONF.volume_scheduler_driver)
         default_driver = importutils.import_object(
-                FLAGS.default_scheduler_driver)
+                CONF.default_scheduler_driver)
 
         self.drivers = {'compute': compute_driver,
                         'volume': volume_driver,

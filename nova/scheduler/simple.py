@@ -24,6 +24,7 @@ Note: Deprecated in Folsom.  Will be removed along with nova-volumes
 """
 
 from nova.common import deprecated
+from nova import config
 from nova import db
 from nova import exception
 from nova import flags
@@ -39,8 +40,8 @@ simple_scheduler_opts = [
                help="maximum number of volume gigabytes to allow per host"),
     ]
 
-FLAGS = flags.FLAGS
-FLAGS.register_opts(simple_scheduler_opts)
+CONF = config.CONF
+CONF.register_opts(simple_scheduler_opts)
 
 
 class SimpleScheduler(chance.ChanceScheduler):
@@ -85,7 +86,7 @@ class SimpleScheduler(chance.ChanceScheduler):
                        if service['availability_zone'] == zone]
         for result in results:
             (service, volume_gigabytes) = result
-            if volume_gigabytes + volume_ref['size'] > FLAGS.max_gigabytes:
+            if volume_gigabytes + volume_ref['size'] > CONF.max_gigabytes:
                 msg = _("Not enough allocatable volume gigabytes remaining")
                 raise exception.NoValidHost(reason=msg)
             if utils.service_is_up(service) and not service['disabled']:

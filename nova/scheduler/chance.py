@@ -23,11 +23,12 @@ Chance (Random) Scheduler implementation
 
 import random
 
+from nova import config
 from nova import exception
 from nova import flags
 from nova.scheduler import driver
 
-FLAGS = flags.FLAGS
+CONF = config.CONF
 
 
 class ChanceScheduler(driver.Scheduler):
@@ -65,7 +66,7 @@ class ChanceScheduler(driver.Scheduler):
         for num, instance_uuid in enumerate(instance_uuids):
             request_spec['instance_properties']['launch_index'] = num
             try:
-                host = self._schedule(context, FLAGS.compute_topic,
+                host = self._schedule(context, CONF.compute_topic,
                                       request_spec, filter_properties)
                 updated_instance = driver.instance_update_db(context,
                         instance_uuid)
@@ -88,7 +89,7 @@ class ChanceScheduler(driver.Scheduler):
                              filter_properties, instance, instance_type,
                              reservations):
         """Select a target for resize."""
-        host = self._schedule(context, FLAGS.compute_topic, request_spec,
+        host = self._schedule(context, CONF.compute_topic, request_spec,
                               filter_properties)
         self.compute_rpcapi.prep_resize(context, image, instance,
                 instance_type, host, reservations)
@@ -96,7 +97,7 @@ class ChanceScheduler(driver.Scheduler):
     def schedule_create_volume(self, context, volume_id, snapshot_id,
                                image_id):
         """Picks a host that is up at random."""
-        host = self._schedule(context, FLAGS.volume_topic, None, {})
-        driver.cast_to_host(context, FLAGS.volume_topic, host, 'create_volume',
+        host = self._schedule(context, CONF.volume_topic, None, {})
+        driver.cast_to_host(context, CONF.volume_topic, host, 'create_volume',
                             volume_id=volume_id, snapshot_id=snapshot_id,
                             image_id=image_id)
