@@ -57,7 +57,6 @@ from nova import volume
 
 LOG = logging.getLogger(__name__)
 
-FLAGS = flags.FLAGS
 CONF = config.CONF
 CONF.import_opt('consoleauth_topic', 'nova.consoleauth')
 
@@ -138,7 +137,7 @@ class API(base.Base):
         self.network_api = network_api or network.API()
         self.volume_api = volume_api or volume.API()
         self.security_group_api = security_group_api or SecurityGroupAPI()
-        self.sgh = importutils.import_object(FLAGS.security_group_handler)
+        self.sgh = importutils.import_object(CONF.security_group_handler)
         self.consoleauth_rpcapi = consoleauth_rpcapi.ConsoleAuthAPI()
         self.scheduler_rpcapi = scheduler_rpcapi.SchedulerAPI()
         self.compute_rpcapi = compute_rpcapi.ComputeAPI()
@@ -308,7 +307,7 @@ class API(base.Base):
             ramdisk_id = image['properties'].get('ramdisk_id')
 
         # Force to None if using null_kernel
-        if kernel_id == str(FLAGS.null_kernel):
+        if kernel_id == str(CONF.null_kernel):
             kernel_id = None
             ramdisk_id = None
 
@@ -332,7 +331,7 @@ class API(base.Base):
             availability_zone, forced_host = availability_zone.split(':')
 
         if not availability_zone:
-            availability_zone = FLAGS.default_schedule_zone
+            availability_zone = CONF.default_schedule_zone
 
         return availability_zone, forced_host
 
@@ -1259,7 +1258,7 @@ class API(base.Base):
                 key = key[len(prefix):]
 
             # Skip properties that are non-inheritable
-            if key in FLAGS.non_inheritable_image_properties:
+            if key in CONF.non_inheritable_image_properties:
                 continue
 
             # By using setdefault, we ensure that the properties set
@@ -1703,7 +1702,7 @@ class API(base.Base):
 
         filter_properties = {'ignore_hosts': []}
 
-        if not FLAGS.allow_resize_to_same_host:
+        if not CONF.allow_resize_to_same_host:
             filter_properties['ignore_hosts'].append(instance['host'])
 
         args = {
@@ -2071,7 +2070,7 @@ class AggregateAPI(base.Base):
         """Creates the model for the aggregate."""
         zones = [s.availability_zone for s in
                  self.db.service_get_all_by_topic(context,
-                                                  FLAGS.compute_topic)]
+                                                  CONF.compute_topic)]
         if availability_zone in zones:
             values = {"name": aggregate_name,
                       "availability_zone": availability_zone}
@@ -2257,7 +2256,7 @@ class SecurityGroupAPI(base.Base):
     def __init__(self, **kwargs):
         super(SecurityGroupAPI, self).__init__(**kwargs)
         self.security_group_rpcapi = compute_rpcapi.SecurityGroupAPI()
-        self.sgh = importutils.import_object(FLAGS.security_group_handler)
+        self.sgh = importutils.import_object(CONF.security_group_handler)
 
     def validate_property(self, value, property, allowed):
         """

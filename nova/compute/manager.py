@@ -52,6 +52,7 @@ from nova.compute import rpcapi as compute_rpcapi
 from nova.compute import task_states
 from nova.compute import utils as compute_utils
 from nova.compute import vm_states
+from nova import config
 import nova.context
 from nova import exception
 from nova import flags
@@ -144,8 +145,8 @@ compute_opts = [
                help="Generate periodic compute.instance.exists notifications"),
     ]
 
-FLAGS = flags.FLAGS
-FLAGS.register_opts(compute_opts)
+CONF = config.CONF
+CONF.register_opts(compute_opts)
 
 QUOTAS = quota.QUOTAS
 
@@ -224,7 +225,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         # TODO(vish): sync driver creation logic with the rest of the system
         #             and re-document the module docstring
         if not compute_driver:
-            compute_driver = FLAGS.compute_driver
+            compute_driver = CONF.compute_driver
 
         if not compute_driver:
             LOG.error(_("Compute driver option required, but not specified"))
@@ -242,7 +243,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         self.network_api = network.API()
         self.volume_api = volume.API()
         self.network_manager = importutils.import_object(
-            FLAGS.network_manager, host=kwargs.get('host', None))
+            CONF.network_manager, host=kwargs.get('host', None))
         self._last_host_check = 0
         self._last_bw_usage_poll = 0
         self._last_info_cache_heal = 0
@@ -281,7 +282,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         context = nova.context.get_admin_context()
         instances = self.db.instance_get_all_by_host(context, self.host)
 
-        if FLAGS.defer_iptables_apply:
+        if CONF.defer_iptables_apply:
             self.driver.filter_defer_apply_on()
 
         try:
@@ -310,8 +311,8 @@ class ComputeManager(manager.SchedulerDependentManager):
                     legacy_net_info = self._legacy_nw_info(net_info)
                     self.driver.plug_vifs(instance, legacy_net_info)
 
-                if ((expect_running and FLAGS.resume_guests_state_on_host_boot)
-                     or FLAGS.start_guests_on_host_boot):
+                if ((expect_running and CONF.resume_guests_state_on_host_boot)
+                     or CONF.start_guests_on_host_boot):
                     LOG.info(
                            _('Rebooting instance after nova-compute restart.'),
                            locals(), instance=instance)
@@ -341,7 +342,7 @@ class ComputeManager(manager.SchedulerDependentManager):
                                       'firewall rules'), instance=instance)
 
         finally:
-            if FLAGS.defer_iptables_apply:
+            if CONF.defer_iptables_apply:
                 self.driver.filter_defer_apply_off()
 
         self._report_driver_status(context)
@@ -363,8 +364,8 @@ class ComputeManager(manager.SchedulerDependentManager):
         """
         #TODO(mdragon): perhaps make this variable by console_type?
         return rpc.queue_get_for(context,
-                                 FLAGS.console_topic,
-                                 FLAGS.console_host)
+                                 CONF.console_topic,
+                                 CONF.console_host)
 
     def get_console_pool_info(self, context, console_type):
         return self.driver.get_console_pool_info(console_type)
@@ -607,7 +608,7 @@ class ComputeManager(manager.SchedulerDependentManager):
     @manager.periodic_task
     def _check_instance_build_time(self, context):
         """Ensure that instances are not stuck in build."""
-        timeout = FLAGS.instance_build_timeout
+        timeout = CONF.instance_build_timeout
         if timeout == 0:
             return
 
@@ -623,13 +624,13 @@ class ComputeManager(manager.SchedulerDependentManager):
     def _update_access_ip(self, context, instance, nw_info):
         """Update the access ip values for a given instance.
 
-        If FLAGS.default_access_ip_network_name is set, this method will
+        If CONF.default_access_ip_network_name is set, this method will
         grab the corresponding network and set the access ip values
         accordingly. Note that when there are multiple ips to choose from,
         an arbitrary one will be chosen.
         """
 
-        network_name = FLAGS.default_access_ip_network_name
+        network_name = CONF.default_access_ip_network_name
         if not network_name:
             return
 
@@ -721,7 +722,7 @@ class ComputeManager(manager.SchedulerDependentManager):
                               vm_state=vm_states.BUILDING,
                               task_state=task_states.NETWORKING,
                               expected_task_state=None)
-        is_vpn = instance['image_ref'] == str(FLAGS.vpn_image_id)
+        is_vpn = instance['image_ref'] == str(CONF.vpn_image_id)
         try:
             # allocate and get network info
             network_info = self.network_api.allocate_for_instance(
@@ -779,7 +780,7 @@ class ComputeManager(manager.SchedulerDependentManager):
                                      extra_usage_info=None):
         # NOTE(sirp): The only thing this wrapper function does extra is handle
         # the passing in of `self.host`. Ordinarily this will just be
-        # `FLAGS.host`, but `Manager`'s gets a chance to override this in its
+        # CONF.host`, but `Manager`'s gets a chance to override this in its
         # `__init__`.
         compute_utils.notify_about_instance_usage(
                 context, instance, event_suffix, network_info=network_info,
@@ -1300,7 +1301,7 @@ class ComputeManager(manager.SchedulerDependentManager):
 
         if new_pass is None:
             # Generate a random password
-            new_pass = utils.generate_password(FLAGS.password_length)
+            new_pass = utils.generate_password(CONF.password_length)
 
         max_tries = 10
 
@@ -1389,7 +1390,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         LOG.audit(_('Rescuing'), context=context, instance=instance)
 
         admin_password = (rescue_password if rescue_password else
-                      utils.generate_password(FLAGS.password_length))
+                      utils.generate_password(CONF.password_length))
 
         network_info = self._get_instance_nw_info(context, instance)
         image_meta = _get_image_meta(context, instance['image_ref'])
@@ -1614,7 +1615,7 @@ class ComputeManager(manager.SchedulerDependentManager):
                     context, instance, "resize.prep.start")
 
             same_host = instance['host'] == self.host
-            if same_host and not FLAGS.allow_resize_to_same_host:
+            if same_host and not CONF.allow_resize_to_same_host:
                 self._set_instance_error_state(context, instance['uuid'])
                 msg = _('destination same as source!')
                 raise exception.MigrationError(msg)
@@ -2015,9 +2016,9 @@ class ComputeManager(manager.SchedulerDependentManager):
         if console_type == 'novnc':
             # For essex, novncproxy_base_url must include the full path
             # including the html file (like http://myhost/vnc_auto.html)
-            access_url = '%s?token=%s' % (FLAGS.novncproxy_base_url, token)
+            access_url = '%s?token=%s' % (CONF.novncproxy_base_url, token)
         elif console_type == 'xvpvnc':
-            access_url = '%s?token=%s' % (FLAGS.xvpvncproxy_base_url, token)
+            access_url = '%s?token=%s' % (CONF.xvpvncproxy_base_url, token)
         else:
             raise exception.ConsoleTypeInvalid(console_type=console_type)
 
@@ -2510,7 +2511,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         If anything errors, we don't care.  It's possible the instance
         has been deleted, etc.
         """
-        heal_interval = FLAGS.heal_instance_info_cache_interval
+        heal_interval = CONF.heal_instance_info_cache_interval
         if not heal_interval:
             return
         curr_time = time.time()
@@ -2553,22 +2554,22 @@ class ComputeManager(manager.SchedulerDependentManager):
 
     @manager.periodic_task
     def _poll_rebooting_instances(self, context):
-        if FLAGS.reboot_timeout > 0:
-            self.driver.poll_rebooting_instances(FLAGS.reboot_timeout)
+        if CONF.reboot_timeout > 0:
+            self.driver.poll_rebooting_instances(CONF.reboot_timeout)
 
     @manager.periodic_task
     def _poll_rescued_instances(self, context):
-        if FLAGS.rescue_timeout > 0:
-            self.driver.poll_rescued_instances(FLAGS.rescue_timeout)
+        if CONF.rescue_timeout > 0:
+            self.driver.poll_rescued_instances(CONF.rescue_timeout)
 
     @manager.periodic_task
     def _poll_unconfirmed_resizes(self, context):
-        if FLAGS.resize_confirm_window > 0:
+        if CONF.resize_confirm_window > 0:
             migrations = self.db.migration_get_unconfirmed_by_dest_compute(
-                    context, FLAGS.resize_confirm_window, self.host)
+                    context, CONF.resize_confirm_window, self.host)
 
             migrations_info = dict(migration_count=len(migrations),
-                    confirm_window=FLAGS.resize_confirm_window)
+                    confirm_window=CONF.resize_confirm_window)
 
             if migrations_info["migration_count"] > 0:
                 LOG.info(_("Found %(migration_count)d unconfirmed migrations "
@@ -2617,7 +2618,7 @@ class ComputeManager(manager.SchedulerDependentManager):
 
     @manager.periodic_task
     def _instance_usage_audit(self, context):
-        if FLAGS.instance_usage_audit:
+        if CONF.instance_usage_audit:
             if not compute_utils.has_audit_been_run(context, self.host):
                 begin, end = utils.last_completed_audit_period()
                 instances = self.db.instance_get_active_by_window_joined(
@@ -2667,7 +2668,7 @@ class ComputeManager(manager.SchedulerDependentManager):
 
         curr_time = time.time()
         if (curr_time - self._last_bw_usage_poll >
-                FLAGS.bandwidth_poll_interval):
+                CONF.bandwidth_poll_interval):
             self._last_bw_usage_poll = curr_time
             LOG.info(_("Updating bandwidth usage cache"))
 
@@ -2732,13 +2733,13 @@ class ComputeManager(manager.SchedulerDependentManager):
     @manager.periodic_task
     def _report_driver_status(self, context):
         curr_time = time.time()
-        if curr_time - self._last_host_check > FLAGS.host_state_interval:
+        if curr_time - self._last_host_check > CONF.host_state_interval:
             self._last_host_check = curr_time
             LOG.info(_("Updating host status"))
             # This will grab info about the host and queue it
             # to be sent to the Schedulers.
             capabilities = self.driver.get_host_stats(refresh=True)
-            capabilities['host_ip'] = FLAGS.my_ip
+            capabilities['host_ip'] = CONF.my_ip
             self.update_service_capabilities(capabilities)
 
     @manager.periodic_task(ticks_between_runs=10)
@@ -2880,9 +2881,9 @@ class ComputeManager(manager.SchedulerDependentManager):
     @manager.periodic_task
     def _reclaim_queued_deletes(self, context):
         """Reclaim instances that are queued for deletion."""
-        interval = FLAGS.reclaim_instance_interval
+        interval = CONF.reclaim_instance_interval
         if interval <= 0:
-            LOG.debug(_("FLAGS.reclaim_instance_interval <= 0, skipping..."))
+            LOG.debug(_("CONF.reclaim_instance_interval <= 0, skipping..."))
             return
 
         instances = self.db.instance_get_all_by_host(context, self.host)
@@ -2910,7 +2911,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         self.resource_tracker.update_available_resource(context)
 
     @manager.periodic_task(
-        ticks_between_runs=FLAGS.running_deleted_instance_poll_interval)
+        ticks_between_runs=CONF.running_deleted_instance_poll_interval)
     def _cleanup_running_deleted_instances(self, context):
         """Cleanup any instances which are erroneously still running after
         having been deleted.
@@ -2931,7 +2932,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         should do in production), or automatically reaping the instances (more
         appropriate for dev environments).
         """
-        action = FLAGS.running_deleted_instance_action
+        action = CONF.running_deleted_instance_action
 
         if action == "noop":
             return
@@ -2959,7 +2960,7 @@ class ComputeManager(manager.SchedulerDependentManager):
                     self._cleanup_volumes(context, instance['uuid'], bdms)
                 else:
                     raise Exception(_("Unrecognized value '%(action)s'"
-                                      " for FLAGS.running_deleted_"
+                                      " for CONF.running_deleted_"
                                       "instance_action"), locals(),
                                     instance=instance)
 
@@ -2969,7 +2970,7 @@ class ComputeManager(manager.SchedulerDependentManager):
         should be pushed down to the virt layer for efficiency.
         """
         def deleted_instance(instance):
-            timeout = FLAGS.running_deleted_instance_timeout
+            timeout = CONF.running_deleted_instance_timeout
             present = instance.name in present_name_labels
             erroneously_running = instance.deleted and present
             old_enough = (not instance.deleted_at or
@@ -3024,13 +3025,13 @@ class ComputeManager(manager.SchedulerDependentManager):
                                     isinstance(e, exception.AggregateError))
 
     @manager.periodic_task(
-        ticks_between_runs=FLAGS.image_cache_manager_interval)
+        ticks_between_runs=CONF.image_cache_manager_interval)
     def _run_image_cache_manager_pass(self, context):
         """Run a single pass of the image cache manager."""
 
         if not self.driver.capabilities["has_imagecache"]:
             return
-        if FLAGS.image_cache_manager_interval == 0:
+        if CONF.image_cache_manager_interval == 0:
             return
 
         all_instances = self.db.instance_get_all(context)

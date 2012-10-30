@@ -20,6 +20,7 @@ model.
 """
 
 from nova.compute import vm_states
+from nova import config
 from nova import db
 from nova import exception
 from nova import flags
@@ -41,8 +42,8 @@ resource_tracker_opts = [
                help='Class that will manage stats for the local compute host')
 ]
 
-FLAGS = flags.FLAGS
-FLAGS.register_opts(resource_tracker_opts)
+CONF = config.CONF
+CONF.register_opts(resource_tracker_opts)
 
 LOG = logging.getLogger(__name__)
 COMPUTE_RESOURCE_SEMAPHORE = "compute_resources"
@@ -115,7 +116,7 @@ class ResourceTracker(object):
         self.compute_node = None
         self.next_claim_id = 1
         self.claims = {}
-        self.stats = importutils.import_object(FLAGS.compute_stats_class)
+        self.stats = importutils.import_object(CONF.compute_stats_class)
         self.tracked_instances = {}
 
     def resource_claim(self, context, instance_ref, limits=None):
@@ -511,8 +512,8 @@ class ResourceTracker(object):
         self.stats.clear()
 
         # set some intiial values, reserve room for host/hypervisor:
-        resources['local_gb_used'] = FLAGS.reserved_host_disk_mb / 1024
-        resources['memory_mb_used'] = FLAGS.reserved_host_memory_mb
+        resources['local_gb_used'] = CONF.reserved_host_disk_mb / 1024
+        resources['memory_mb_used'] = CONF.reserved_host_memory_mb
         resources['vcpus_used'] = 0
         resources['free_ram_mb'] = (resources['memory_mb'] -
                                     resources['memory_mb_used'])
