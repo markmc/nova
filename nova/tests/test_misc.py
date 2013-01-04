@@ -28,7 +28,7 @@ class ExceptionTestCase(test.TestCase):
 
     def test_exceptions_raise(self):
         # NOTE(dprince): disable format errors since we are not passing kwargs
-        self.flags(fatal_exception_format_errors=False)
+        self.stubs.Set(exception, '_FATAL_EXCEPTION_FORMAT_ERRORS', False)
         for name in dir(exception):
             exc = getattr(exception, name)
             if isinstance(exc, type):

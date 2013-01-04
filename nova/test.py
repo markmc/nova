@@ -38,6 +38,7 @@ from nova import context
 from nova import db
 from nova.db import migration
 from nova.db.sqlalchemy import session
+from nova import exception
 from nova.network import manager as network_manager
 from nova.openstack.common import cfg
 from nova.openstack.common import log as logging
@@ -220,7 +221,7 @@ class TestCase(testtools.TestCase):
         self.addCleanup(self._clear_attrs)
         self.useFixture(fixtures.EnvironmentVariable('http_proxy'))
         self.policy = self.useFixture(policy_fixture.PolicyFixture())
-        CONF.set_override('fatal_exception_format_errors', True)
+        self.stubs.Set(exception, '_FATAL_EXCEPTION_FORMAT_ERRORS', True)
 
     def _clear_attrs(self):
         # Delete attributes that don't start with _ so they don't pin
