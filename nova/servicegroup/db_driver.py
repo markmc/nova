@@ -25,6 +25,9 @@ from nova import utils
 
 
 CONF = cfg.CONF
+CONF.import_opt('service_down_time', 'nova.service')
+CONF.import_opt('node_availability_zone', 'nova.service')
+
 LOG = logging.getLogger(__name__)
 
 

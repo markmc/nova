@@ -105,12 +105,17 @@ service_opts = [
     cfg.StrOpt('scheduler_manager',
                default='nova.scheduler.manager.SchedulerManager',
                help='full class name for the Manager for scheduler'),
+    cfg.StrOpt('node_availability_zone',
+               default='nova',
+               help='availability zone of this node'),
+    cfg.IntOpt('service_down_time',
+               default=60,
+               help='maximum time since last check-in for up service'),
     ]
 
 CONF = cfg.CONF
 CONF.register_opts(service_opts)
 CONF.import_opt('host', 'nova.config')
-CONF.import_opt('node_availability_zone', 'nova.config')
 
 
 class SignalExit(SystemExit):

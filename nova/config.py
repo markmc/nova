@@ -54,18 +54,12 @@ global_opts = [
                     'However, the node name must be valid within '
                     'an AMQP key, and if using ZeroMQ, a valid '
                     'hostname, FQDN, or IP address'),
-    cfg.StrOpt('node_availability_zone',
-               default='nova',
-               help='availability zone of this node'),
     cfg.ListOpt('memcached_servers',
                 default=None,
                 help='Memcached servers or None for in process cache.'),
     cfg.BoolOpt('use_ipv6',
                 default=False,
                 help='use ipv6'),
-    cfg.IntOpt('service_down_time',
-               default=60,
-               help='maximum time since last check-in for up service'),
 ]
 
 cfg.CONF.register_opts(global_opts)

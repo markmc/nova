@@ -52,7 +52,7 @@ quantum_opts = [
 
 CONF = cfg.CONF
 CONF.register_opts(quantum_opts)
-CONF.import_opt('node_availability_zone', 'nova.config')
+CONF.import_opt('node_availability_zone', 'nova.service')
 CONF.import_opt('default_floating_pool', 'nova.network.manager')
 LOG = logging.getLogger(__name__)
 
