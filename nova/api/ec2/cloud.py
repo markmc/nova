@@ -71,7 +71,7 @@ ec2_opts = [
 CONF = cfg.CONF
 CONF.register_opts(ec2_opts)
 CONF.import_opt('my_ip', 'nova.config')
-CONF.import_opt('vpn_key_suffix', 'nova.config')
+CONF.import_opt('vpn_key_suffix', 'nova.cloudpipe.pipelib')
 
 LOG = logging.getLogger(__name__)
 
