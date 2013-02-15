@@ -17,7 +17,8 @@
 
 import os
 
-from nova.openstack.common import cfg
+from oslo.config import cfg
+
 from nova import test
 from nova import utils
 from nova.virt import fake
