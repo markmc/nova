@@ -21,6 +21,7 @@ import fixtures
 import mock
 import mox
 from oslo.config import cfg
+from oslo import messaging
 
 from nova import context
 from nova import db
@@ -35,8 +36,6 @@ from nova.openstack.common.db import exception as db_exc
 from nova.openstack.common import importutils
 from nova.openstack.common import log as logging
 from nova.openstack.common import processutils
-from nova.openstack.common import rpc
-from nova.openstack.common.rpc import common as rpc_common
 from nova import quota
 from nova import test
 from nova.tests import fake_instance
@@ -884,7 +883,7 @@ class VlanNetworkTestCase(test.TestCase):
         def fake5_network(*args, **kwargs):
             return {'multi_host': False, 'host': 'testhost'}
 
-        def fake6(*args, **kwargs):
+        def fake6(ctxt, method, **kwargs):
             self.local = False
 
         def fake7(*args, **kwargs):
@@ -938,7 +937,9 @@ class VlanNetworkTestCase(test.TestCase):
         self.local = True
         self.stubs.Set(self.network.db, 'fixed_ip_get_by_address', fake4)
         self.stubs.Set(self.network.db, 'network_get', fake4_network)
-        self.stubs.Set(rpc, 'call', fake6)
+        self.stubs.Set(self.network.network_rpcapi.client, 'prepare',
+                       lambda **kw: self.network.network_rpcapi.client)
+        self.stubs.Set(self.network.network_rpcapi.client, 'call', fake6)
         self.network.associate_floating_ip(ctxt, mox.IgnoreArg(),
                                                  mox.IgnoreArg())
         self.assertFalse(self.local)
@@ -1072,7 +1073,7 @@ class VlanNetworkTestCase(test.TestCase):
         def fake5_network(*args, **kwargs):
             return {'multi_host': False, 'host': 'testhost'}
 
-        def fake6(*args, **kwargs):
+        def fake6(ctxt, method, **kwargs):
             self.local = False
 
         def fake7(*args, **kwargs):
@@ -1101,7 +1102,9 @@ class VlanNetworkTestCase(test.TestCase):
         self.local = True
         self.stubs.Set(self.network.db, 'fixed_ip_get', fake4)
         self.stubs.Set(self.network.db, 'network_get', fake4_network)
-        self.stubs.Set(rpc, 'call', fake6)
+        self.stubs.Set(self.network.network_rpcapi.client, 'prepare',
+                       lambda **kw: self.network.network_rpcapi.client)
+        self.stubs.Set(self.network.network_rpcapi.client, 'call', fake6)
         self.network.disassociate_floating_ip(ctxt, mox.IgnoreArg())
         self.assertFalse(self.local)
 
@@ -1411,7 +1414,7 @@ class CommonNetworkTestCase(test.TestCase):
                 use_slave=False).AndRaise(exception.InstanceNotFound(
                                                  instance_id=FAKEUUID))
         self.mox.ReplayAll()
-        self.assertRaises(rpc_common.ClientException,
+        self.assertRaises(messaging.ExpectedException,
                           manager.get_instance_nw_info,
                           self.context, FAKEUUID, 'fake_rxtx_factor', HOST)
 
@@ -2518,7 +2521,7 @@ class FloatingIPTestCase(test.TestCase):
             self.context, '1.2.3.4').AndRaise(
                 exception.FloatingIpNotFoundForAddress(address='fake'))
         self.mox.ReplayAll()
-        self.assertRaises(rpc_common.ClientException,
+        self.assertRaises(messaging.ExpectedException,
                           self.network.deallocate_floating_ip,
                           self.context, '1.2.3.4')
 
@@ -2529,7 +2532,7 @@ class FloatingIPTestCase(test.TestCase):
             self.context, '1.2.3.4').AndRaise(
                 exception.FloatingIpNotFoundForAddress(address='fake'))
         self.mox.ReplayAll()
-        self.assertRaises(rpc_common.ClientException,
+        self.assertRaises(messaging.ExpectedException,
                           self.network.associate_floating_ip,
                           self.context, '1.2.3.4', '10.0.0.1')
 
@@ -2540,7 +2543,7 @@ class FloatingIPTestCase(test.TestCase):
             self.context, '1.2.3.4').AndRaise(
                 exception.FloatingIpNotFoundForAddress(address='fake'))
         self.mox.ReplayAll()
-        self.assertRaises(rpc_common.ClientException,
+        self.assertRaises(messaging.ExpectedException,
                           self.network.disassociate_floating_ip,
                           self.context, '1.2.3.4')
 
@@ -2550,7 +2553,7 @@ class FloatingIPTestCase(test.TestCase):
         self.network.db.floating_ip_get(self.context, 'fake-id').AndRaise(
             exception.FloatingIpNotFound(id='fake'))
         self.mox.ReplayAll()
-        self.assertRaises(rpc_common.ClientException,
+        self.assertRaises(messaging.ExpectedException,
                           self.network.get_floating_ip,
                           self.context, 'fake-id')
 

@@ -38,6 +38,7 @@ from xml.sax import saxutils
 import eventlet
 import netaddr
 from oslo.config import cfg
+from oslo import messaging
 import six
 
 from nova import exception
@@ -48,7 +49,6 @@ from nova.openstack.common import importutils
 from nova.openstack.common import lockutils
 from nova.openstack.common import log as logging
 from nova.openstack.common import processutils
-from nova.openstack.common.rpc import common as rpc_common
 from nova.openstack.common import timeutils
 
 notify_decorator = 'nova.notifications.notify_decorator'
@@ -928,8 +928,8 @@ class ExceptionHelper(object):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except rpc_common.ClientException as e:
-                raise (e._exc_info[1], None, e._exc_info[2])
+            except messaging.ExpectedException as e:
+                raise (e.exc_info[1], None, e.exc_info[2])
         return wrapper
 
 

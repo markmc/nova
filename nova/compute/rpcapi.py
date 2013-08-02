@@ -1,6 +1,6 @@
 # vim: tabstop=4 shiftwidth=4 softtabstop=4
 
-# Copyright 2012, Red Hat, Inc.
+# Copyright 2013 Red Hat, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -19,12 +19,13 @@ Client side of the compute RPC API.
 """
 
 from oslo.config import cfg
+from oslo import messaging
 
 from nova import exception
 from nova.objects import base as objects_base
 from nova.openstack.common.gettextutils import _
 from nova.openstack.common import jsonutils
-from nova import rpcclient
+from nova import rpc
 
 rpcapi_opts = [
     cfg.StrOpt('compute_topic',
@@ -59,7 +60,7 @@ def _compute_host(host, instance):
     return instance['host']
 
 
-class ComputeAPI(rpcclient.RpcProxy):
+class ComputeAPI(object):
     '''Client side of the compute rpc API.
 
     API version history:
@@ -218,33 +219,27 @@ class ComputeAPI(rpcclient.RpcProxy):
         3.4 - Update rebuild_instance() to take an instance object
     '''
 
-    #
-    # NOTE(russellb): This is the default minimum version that the server
-    # (manager) side must implement unless otherwise specified using a version
-    # argument to self.call()/cast()/etc. here.  It should be left as X.0 where
-    # X is the current major API version (1.0, 2.0, ...).  For more information
-    # about rpc API versioning, see the docs in
-    # openstack/common/rpc/dispatcher.py.
-    #
-    BASE_RPC_API_VERSION = '3.0'
-
     VERSION_ALIASES = {
         'grizzly': '2.27',
         'havana': '2.47',
     }
 
     def __init__(self):
+        super(ComputeAPI, self).__init__()
+        target = messaging.Target(topic=CONF.compute_topic, version='3.0')
         version_cap = self.VERSION_ALIASES.get(CONF.upgrade_levels.compute,
                                                CONF.upgrade_levels.compute)
-        super(ComputeAPI, self).__init__(
-                topic=CONF.compute_topic,
-                default_version=self.BASE_RPC_API_VERSION,
-                serializer=objects_base.NovaObjectSerializer(),
-                version_cap=version_cap)
-        self.client = self.get_client()
+        serializer = objects_base.NovaObjectSerializer()
+        self.client = self.get_client(target, version_cap, serializer)
+
+    # Cells overrides this
+    def get_client(self, target, version_cap, serializer):
+        return rpc.get_client(target,
+                              version_cap=version_cap,
+                              serializer=serializer)
 
     def _get_compat_version(self, current, havana_compat):
-        if not self.can_send_version(current):
+        if not self.client.can_send_version(current):
             return havana_compat
         return current
 
@@ -258,9 +253,9 @@ class ComputeAPI(rpcclient.RpcProxy):
                            parameter for the remote method.
         :param host: This is the host to send the message to.
         '''
-        if self.can_send_version('3.0'):
+        if self.client.can_send_version('3.0'):
             version = '3.0'
-        elif self.can_send_version('2.48'):
+        elif self.client.can_send_version('2.48'):
             version = '2.48'
         else:
             # NOTE(russellb) Havana compat
@@ -419,7 +414,7 @@ class ComputeAPI(rpcclient.RpcProxy):
                           instance=instance_p)
 
     def get_vnc_console(self, ctxt, instance, console_type):
-        if self.can_send_version('3.2'):
+        if self.client.can_send_version('3.2'):
             version = '3.2'
         else:
             # NOTE(russellb) Havana compat
@@ -431,7 +426,7 @@ class ComputeAPI(rpcclient.RpcProxy):
                           instance=instance, console_type=console_type)
 
     def get_spice_console(self, ctxt, instance, console_type):
-        if self.can_send_version('3.1'):
+        if self.client.can_send_version('3.1'):
             version = '3.1'
         else:
             # NOTE(russellb) Havana compat
@@ -443,7 +438,7 @@ class ComputeAPI(rpcclient.RpcProxy):
                           instance=instance, console_type=console_type)
 
     def validate_console_port(self, ctxt, instance, port, console_type):
-        if self.can_send_version('3.3'):
+        if self.client.can_send_version('3.3'):
             version = '3.3'
         else:
             # NOTE(russellb) Havana compat
@@ -563,7 +558,7 @@ class ComputeAPI(rpcclient.RpcProxy):
             kwargs=None):
         # NOTE(danms): kwargs is only here for cells compatibility, don't
         # actually send it to compute
-        if self.can_send_version('3.4'):
+        if self.client.can_send_version('3.4'):
             version = '3.4'
         else:
             # NOTE(russellb) Havana compat
@@ -595,9 +590,9 @@ class ComputeAPI(rpcclient.RpcProxy):
                            parameter for the remote method.
         :param host: This is the host to send the message to.
         '''
-        if self.can_send_version('3.0'):
+        if self.client.can_send_version('3.0'):
             version = '3.0'
-        elif self.can_send_version('2.48'):
+        elif self.client.can_send_version('2.48'):
             version = '2.48'
         else:
             # NOTE(russellb) Havana compat
@@ -866,7 +861,7 @@ class ComputeAPI(rpcclient.RpcProxy):
                    delete_info=delete_info)
 
 
-class SecurityGroupAPI(rpcclient.RpcProxy):
+class SecurityGroupAPI(object):
     '''Client side of the security group rpc API.
 
     API version history:
@@ -880,27 +875,15 @@ class SecurityGroupAPI(rpcclient.RpcProxy):
               compute API since it's all together on the server side.
     '''
 
-    #
-    # NOTE(russellb): This is the default minimum version that the server
-    # (manager) side must implement unless otherwise specified using a version
-    # argument to self.call()/cast()/etc. here.  It should be left as X.0 where
-    # X is the current major API version (1.0, 2.0, ...).  For more information
-    # about rpc API versioning, see the docs in
-    # openstack/common/rpc/dispatcher.py.
-    #
-    BASE_RPC_API_VERSION = '3.0'
-
     def __init__(self):
+        super(SecurityGroupAPI, self).__init__()
+        target = messaging.Target(topic=CONF.compute_topic, version='3.0')
         version_cap = ComputeAPI.VERSION_ALIASES.get(
                 CONF.upgrade_levels.compute, CONF.upgrade_levels.compute)
-        super(SecurityGroupAPI, self).__init__(
-                topic=CONF.compute_topic,
-                default_version=self.BASE_RPC_API_VERSION,
-                version_cap=version_cap)
-        self.client = self.get_client()
+        self.client = rpc.get_client(target, version_cap)
 
     def _get_compat_version(self, current, havana_compat):
-        if not self.can_send_version(current):
+        if not self.client.can_send_version(current):
             return havana_compat
         return current
 
