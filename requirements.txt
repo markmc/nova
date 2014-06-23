@@ -29,7 +29,7 @@ six>=1.7.0
 stevedore>=0.14
 websockify>=0.5.1,<0.6
 wsgiref>=0.1.2
-oslo.config>=1.2.1
+oslo.config>=1.4.0.0a1  # FIXME(markmc): update when generator is released
 oslo.rootwrap
 oslotest
 pycadf>=0.5.1
