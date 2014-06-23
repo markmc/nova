@@ -19,8 +19,10 @@ Leverages websockify.py by Joel Martin
 '''
 
 import Cookie
+import os
 import socket
 
+from oslo.config import cfg
 import websockify
 
 from nova.consoleauth import rpcapi as consoleauth_rpcapi
@@ -29,6 +31,99 @@ from nova.openstack.common.gettextutils import _
 from nova.openstack.common import log as logging
 
 LOG = logging.getLogger(__name__)
+
+websocketproxy_opts = [
+    cfg.BoolOpt('record',
+                default=False,
+                help='Record sessions to FILE.[session_number]'),
+    cfg.BoolOpt('daemon',
+                default=False,
+                help='Become a daemon (background process)'),
+    cfg.BoolOpt('ssl_only',
+                default=False,
+                help='Disallow non-encrypted connections'),
+    cfg.BoolOpt('source_is_ipv6',
+                default=False,
+                help='Source is ipv6'),
+    cfg.StrOpt('cert',
+               default='self.pem',
+               help='SSL certificate file'),
+    cfg.StrOpt('key',
+               help='SSL key file (if separate from cert)'),
+    cfg.StrOpt('web',
+               help='Run webserver on same port. Serve files from DIR.'),
+    ]
+
+novnc_opts = [
+    cfg.StrOpt('novncproxy_host',
+               default='0.0.0.0',
+               help='Host on which to listen for incoming requests'),
+    cfg.IntOpt('novncproxy_port',
+               default=6080,
+               help='Port on which to listen for incoming requests'),
+    ]
+
+spice_opts = [
+    cfg.StrOpt('html5proxy_host',
+               default='0.0.0.0',
+               help='Host on which to listen for incoming requests',
+               deprecated_group='DEFAULT',
+               deprecated_name='spicehtml5proxy_host'),
+    cfg.IntOpt('html5proxy_port',
+               default=6082,
+               help='Port on which to listen for incoming requests',
+               deprecated_group='DEFAULT',
+               deprecated_name='spicehtml5proxy_port'),
+    ]
+
+CONF = cfg.CONF
+CONF.register_cli_opts(websocketproxy_opts)
+CONF.register_cli_opts(novnc_opts)
+CONF.register_cli_opts(spice_opts, group='spice')
+
+
+class InvalidWebSocketProxyConfig(Exception):
+    pass
+
+
+def set_defaults(web):
+    cfg.set_defaults(websocketproxy_opts, web=web)
+
+
+def create(listen_host, listen_port, file_only=False):
+    if CONF.ssl_only and not os.path.exists(CONF.cert):
+        raise InvalidWebSocketProxyConfig(
+            _("SSL only and %s not found.") % CONF.cert)
+
+    if not os.path.exists(CONF.web):
+        raise InvalidWebSocketProxyConfig(
+            _("Can not find html/js/css files at %s.") % CONF.web)
+
+    return NovaWebSocketProxy(listen_host=listen_host,
+                              listen_port=listen_port,
+                              source_is_ipv6=CONF.source_is_ipv6,
+                              verbose=CONF.verbose,
+                              cert=CONF.cert,
+                              key=CONF.key,
+                              ssl_only=CONF.ssl_only,
+                              daemon=CONF.daemon,
+                              record=CONF.record,
+                              traffic=CONF.verbose and not CONF.daemon,
+                              web=CONF.web,
+                              file_only=file_only,
+                              RequestHandlerClass=NovaProxyRequestHandler)
+
+
+def create_spice_html5proxy(conf):
+    return create(conf,
+                  CONF.spice.html5proxy_host,
+                  CONF.spice.html5proxy_port)
+
+
+def create_novnc_proxy(conf):
+    return create(conf,
+                  CONF.novncproxy_host,
+                  CONF.novncproxy_port)
 
 
 class NovaProxyRequestHandlerBase(object):
