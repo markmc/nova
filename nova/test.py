@@ -56,14 +56,7 @@ from nova.tests import policy_fixture
 from nova import utils
 
 
-test_opts = [
-    cfg.StrOpt('sqlite_clean_db',
-               default='clean.sqlite',
-               help='File name of clean sqlite db'),
-    ]
-
 CONF = cfg.CONF
-CONF.register_opts(test_opts)
 CONF.import_opt('connection',
                 'nova.openstack.common.db.options',
                 group='database')
@@ -81,6 +74,8 @@ objects.register_all()
 
 _DB_CACHE = None
 _TRUE_VALUES = ('True', 'true', '1', 'yes')
+
+_SQLITE_CLEAN_DB = 'clean.sqlite'
 
 
 class Database(fixtures.Fixture):
@@ -299,7 +294,7 @@ class TestCase(testtools.TestCase):
                 _DB_CACHE = Database(session, migration,
                         sql_connection=CONF.database.connection,
                         sqlite_db=CONF.database.sqlite_db,
-                        sqlite_clean_db=CONF.sqlite_clean_db)
+                        sqlite_clean_db=_SQLITE_CLEAN_DB)
 
             self.useFixture(_DB_CACHE)
 
