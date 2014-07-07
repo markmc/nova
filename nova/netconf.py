@@ -45,9 +45,11 @@ def _get_my_ip():
 netconf_opts = [
     cfg.StrOpt('my_ip',
                default=_get_my_ip(),
+               sample_default='10.0.0.1',
                help='IP address of this host'),
     cfg.StrOpt('host',
                default=socket.gethostname(),
+               sample_default='nova',
                help='Name of this node.  This can be an opaque identifier.  '
                     'It is not necessarily a hostname, FQDN, or IP address. '
                     'However, the node name must be valid within '
