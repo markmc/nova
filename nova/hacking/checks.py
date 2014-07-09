@@ -146,7 +146,9 @@ def capital_cfg_help(logical_line, tokens):
         for t in range(len(tokens)):
             if tokens[t][1] == "help":
                 txt = tokens[t + 2][1]
-                if len(txt) > 1 and txt[1].islower():
+                if (len(txt) > 1 and
+                    txt[0] in ("'", '"') and
+                    txt[1].islower()):
                     yield(0, msg)
 
 
